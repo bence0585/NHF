@@ -41,6 +41,21 @@ void event_loop(SDL_Renderer *renderer)
                     quit = 1;
                 }
                 break;
+
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                if (event.button.button == SDL_BUTTON_LEFT)
+                {
+                    int x = event.button.x;
+                    int y = event.button.y;
+                    if (is_zoom_in_button_clicked(x, y))
+                    {
+                        zoom_level += 0.1;
+                    }
+                    else if (is_zoom_out_button_clicked(x, y))
+                    {
+                        zoom_level -= 0.1;
+                    }
+                }
             }
         }
 
@@ -75,14 +90,14 @@ void event_loop(SDL_Renderer *renderer)
         render_grid(renderer, textures, zoom_level, offset_x, offset_y);
 
         // Render the character
-        SDL_FRect character_rect = {(float)(screen_width / 2 - (tile_size * zoom_level) / 2), (float)(screen_height / 2 - (tile_size * zoom_level) / 2), (float)(tile_size * zoom_level), (float)(tile_size * zoom_level)};
+        SDL_FRect character_rect = {(float)(screen_width / 2 - (tile_size * zoom_level) / 2), (float)(screen_height / 2 - (tile_size * zoom_level) / 2), (float)(tile_size * zoom_level), (float)(tile_size * 2 * zoom_level)};
         SDL_RenderTexture(renderer, character_texture, NULL, &character_rect);
 
         // Render UI elements
         render_ui(renderer);
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(1);
+        SDL_Delay(10);
     }
 
     // Clean up textures
