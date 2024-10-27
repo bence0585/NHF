@@ -11,7 +11,7 @@ SDL_Renderer *create_renderer(SDL_Window *window);
 
 // Grid functions
 void read_grid_state(const char *filename);
-void render_grid(SDL_Renderer *renderer, SDL_Texture **textures, int zoom_level, int offset_x, int offset_y);
+void render_grid(SDL_Renderer *renderer, SDL_Texture **textures, double zoom_level, int offset_x, int offset_y);
 
 // Texture functions
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);

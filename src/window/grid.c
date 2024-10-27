@@ -26,9 +26,9 @@ void read_grid_state(const char *filename)
     fclose(file);
 }
 
-void render_grid(SDL_Renderer *renderer, SDL_Texture **textures, int zoom_level, int offset_x, int offset_y)
+void render_grid(SDL_Renderer *renderer, SDL_Texture **textures, double zoom_level, int offset_x, int offset_y)
 {
-    int tile_size = 32 * zoom_level;
+    int tile_size = 64 * zoom_level;
 
     for (int i = 0; i < GRID_WIDTH; i++)
     {

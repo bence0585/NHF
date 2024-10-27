@@ -4,7 +4,7 @@ void event_loop(SDL_Renderer *renderer)
 {
     SDL_Event event;
     int quit = 0;
-    int zoom_level = 1;
+    double zoom_level = 1;
     int character_x = 640, character_y = 360; // Character starting position
     int tile_size = 32;
 
@@ -61,11 +61,11 @@ void event_loop(SDL_Renderer *renderer)
                 {
                     if (is_zoom_in_button_clicked(event.button.x, event.button.y))
                     {
-                        zoom_level++;
+                        zoom_level += .05;
                     }
                     else if (is_zoom_out_button_clicked(event.button.x, event.button.y))
                     {
-                        zoom_level--;
+                        zoom_level -= .05;
                     }
                 }
                 break;
