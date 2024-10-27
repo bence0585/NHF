@@ -23,6 +23,9 @@ void event_loop(SDL_Renderer *renderer)
 
     while (!quit)
     {
+        SDL_PumpEvents(); // Update the state array
+        const bool *state = SDL_GetKeyboardState(NULL);
+
         while (SDL_PollEvent(&event))
         {
             switch (event.type)
@@ -37,39 +40,26 @@ void event_loop(SDL_Renderer *renderer)
                     SDL_Log("SDL3 ESC key quit");
                     quit = 1;
                 }
-                // Character movement
-                else if (event.key.key == SDLK_UP)
-                {
-                    character_y -= 2;
-                }
-                else if (event.key.key == SDLK_DOWN)
-                {
-                    character_y += 2;
-                }
-                else if (event.key.key == SDLK_LEFT)
-                {
-                    character_x -= 2;
-                }
-                else if (event.key.key == SDLK_RIGHT)
-                {
-                    character_x += 2;
-                }
-                break;
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                // Handle zoom in/out buttons
-                if (event.button.button == SDL_BUTTON_LEFT)
-                {
-                    if (is_zoom_in_button_clicked(event.button.x, event.button.y))
-                    {
-                        zoom_level += .05;
-                    }
-                    else if (is_zoom_out_button_clicked(event.button.x, event.button.y))
-                    {
-                        zoom_level -= .05;
-                    }
-                }
                 break;
             }
+        }
+
+        // Character movement
+        if (state[SDL_SCANCODE_W])
+        {
+            character_y -= 2;
+        }
+        if (state[SDL_SCANCODE_S])
+        {
+            character_y += 2;
+        }
+        if (state[SDL_SCANCODE_A])
+        {
+            character_x -= 2;
+        }
+        if (state[SDL_SCANCODE_D])
+        {
+            character_x += 2;
         }
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0x0, 0x0);
