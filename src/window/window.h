@@ -11,7 +11,11 @@ SDL_Renderer *create_renderer(SDL_Window *window);
 
 // Grid functions
 void read_grid_state(const char *filename);
-void render_grid(SDL_Renderer *renderer, SDL_Texture **textures, double zoom_level, int offset_x, int offset_y);
+void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
+// Coordinate conversion function
+void convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y);
+// Highlight function
+void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y);
 // Texture functions
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 

@@ -8,15 +8,13 @@ void event_loop(SDL_Renderer *renderer)
     int character_x = 640, character_y = 360; // Character starting position
     int tile_size = 32;
 
-    // Load multiple textures for different tile types
-    SDL_Texture *textures[4];
-    textures[0] = load_texture(renderer, "src/img/grass.bmp");
-    textures[1] = load_texture(renderer, "src/img/water.bmp");
-    textures[2] = load_texture(renderer, "src/img/tilled_soil.bmp");
-    textures[3] = load_texture(renderer, "src/img/stone_path.bmp");
-
     // Load character texture
     SDL_Texture *character_texture = load_texture(renderer, "src/img/character.png");
+
+    // Load tilemap texture
+    SDL_Texture *tilemap = load_texture(renderer, "src/img/tilemap.png");
+    int tilemap_width = 2;  // Number of tiles horizontally in the tilemap
+    int tilemap_height = 2; // Number of tiles vertically in the tilemap
 
     // Read the grid state from a file
     read_grid_state("src/grid_state.txt");
@@ -49,11 +47,11 @@ void event_loop(SDL_Renderer *renderer)
                     int y = event.button.y;
                     if (is_zoom_in_button_clicked(x, y))
                     {
-                        zoom_level += 0.1;
+                        zoom_level += 1;
                     }
                     else if (is_zoom_out_button_clicked(x, y))
                     {
-                        zoom_level -= 0.1;
+                        zoom_level -= 1;
                     }
                 }
             }
@@ -86,11 +84,22 @@ void event_loop(SDL_Renderer *renderer)
         int offset_x = screen_width / 2 - character_x * zoom_level - (tile_size * zoom_level) / 2;
         int offset_y = screen_height / 2 - character_y * zoom_level - (tile_size * zoom_level) / 2;
 
-        // Render the grid using the textures
-        render_grid(renderer, textures, zoom_level, offset_x, offset_y);
+        // Render the grid using the tilemap
+        render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
-        // Render the character
-        SDL_FRect character_rect = {(float)(screen_width / 2 - (tile_size * zoom_level) / 2), (float)(screen_height / 2 - (tile_size * zoom_level) / 2), (float)(tile_size * zoom_level), (float)(tile_size * 2 * zoom_level)};
+        // Convert character coordinates to grid coordinates
+        int grid_x, grid_y;
+        convert_to_grid_coordinates(character_x, character_y, tile_size, &grid_x, &grid_y);
+
+        // Highlight the grid square the character is standing on
+        highlight_grid_square(renderer, grid_x, grid_y, tile_size, zoom_level, offset_x, offset_y);
+
+        // Render the character from the middle of its coordinates
+        SDL_FRect character_rect = {
+            (float)(screen_width / 2 - (tile_size * zoom_level) / 2),
+            (float)(screen_height / 2 - (tile_size * zoom_level) / 2),
+            (float)(tile_size * zoom_level),
+            (float)(tile_size * 2 * zoom_level)};
         SDL_RenderTexture(renderer, character_texture, NULL, &character_rect);
 
         // Render UI elements
@@ -101,12 +110,6 @@ void event_loop(SDL_Renderer *renderer)
     }
 
     // Clean up textures
-    for (int i = 0; i < 4; i++)
-    {
-        if (textures[i] != NULL)
-        {
-            SDL_DestroyTexture(textures[i]);
-        }
-    }
     SDL_DestroyTexture(character_texture);
+    SDL_DestroyTexture(tilemap);
 }

@@ -4,6 +4,7 @@
 
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path)
 {
+
     SDL_Surface *surface = IMG_Load(file_path);
     if (!surface)
     {
