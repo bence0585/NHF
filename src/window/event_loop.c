@@ -1,3 +1,5 @@
+#include <unistd.h>
+#include <stdio.h>
 #include "window.h"
 
 void event_loop(SDL_Renderer *renderer)
@@ -8,16 +10,24 @@ void event_loop(SDL_Renderer *renderer)
     int character_x = 640, character_y = 360; // Character starting position
     int tile_size = 32;
 
-    // Load character texture
-    SDL_Texture *character_texture = load_texture(renderer, "src/img/character.png");
+    char cwd[1024];
 
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        SDL_Log("Current working directory: %s", cwd);
+    } else {
+        SDL_Log("getcwd() error");
+    }
+    // Load character texture
+    SDL_Texture *character_texture = load_texture(renderer, "../src/img/character.png");
     // Load tilemap texture
-    SDL_Texture *tilemap = load_texture(renderer, "src/img/tilemap.png");
+    //LOG THE CURRENT FOLDER
+
+    SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
     int tilemap_width = 2;  // Number of tiles horizontally in the tilemap
     int tilemap_height = 2; // Number of tiles vertically in the tilemap
 
     // Read the grid state from a file
-    read_grid_state("src/grid_state.txt");
+    read_grid_state("../src/grid_state.txt");
 
     while (!quit)
     {
@@ -58,19 +68,19 @@ void event_loop(SDL_Renderer *renderer)
         }
 
         // Character movement
-        if (state[SDL_SCANCODE_W])
+        if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP])
         {
             character_y -= 2;
         }
-        if (state[SDL_SCANCODE_S])
+        if (state[SDL_SCANCODE_S] || state[SDL_SCANCODE_DOWN])
         {
             character_y += 2;
         }
-        if (state[SDL_SCANCODE_A])
+        if (state[SDL_SCANCODE_A] || state[SDL_SCANCODE_LEFT])
         {
             character_x -= 2;
         }
-        if (state[SDL_SCANCODE_D])
+        if (state[SDL_SCANCODE_D] || state[SDL_SCANCODE_RIGHT])
         {
             character_x += 2;
         }
