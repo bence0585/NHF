@@ -32,8 +32,8 @@ void event_loop(SDL_Renderer *renderer)
     // LOG THE CURRENT FOLDER
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
-    int tilemap_width = 2;  // Number of tiles horizontally in the tilemap
-    int tilemap_height = 2; // Number of tiles vertically in the tilemap
+    int tilemap_width = 16;  // Number of tiles horizontally in the tilemap
+    int tilemap_height = 16; // Number of tiles vertically in the tilemap
 
     // Read the grid state from a file
     read_grid_state("../src/grid_state.txt");
