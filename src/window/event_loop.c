@@ -20,11 +20,6 @@ void event_loop(SDL_Renderer *renderer)
     {
         SDL_Log("getcwd() error");
     }
-    initialize_grid(GRID_WIDTH, GRID_HEIGHT);
-
-    // Use the grid (e.g., read_grid_state, render_grid, etc.)
-
-    free_grid(GRID_WIDTH);
 
     // Load character texture
     SDL_Texture *character_texture = load_texture(renderer, "../src/img/character.png");
