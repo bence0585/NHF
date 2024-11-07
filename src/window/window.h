@@ -19,6 +19,9 @@ void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
 // Texture functions
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 
+void initialize_grid(int width, int height);
+void free_grid(int width);
+
 // Event loop
 void event_loop(SDL_Renderer *renderer);
 

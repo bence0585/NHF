@@ -12,15 +12,24 @@ void event_loop(SDL_Renderer *renderer)
 
     char cwd[1024];
 
-    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    if (getcwd(cwd, sizeof(cwd)) != NULL)
+    {
         SDL_Log("Current working directory: %s", cwd);
-    } else {
+    }
+    else
+    {
         SDL_Log("getcwd() error");
     }
+    initialize_grid(GRID_WIDTH, GRID_HEIGHT);
+
+    // Use the grid (e.g., read_grid_state, render_grid, etc.)
+
+    free_grid(GRID_WIDTH);
+
     // Load character texture
     SDL_Texture *character_texture = load_texture(renderer, "../src/img/character.png");
     // Load tilemap texture
-    //LOG THE CURRENT FOLDER
+    // LOG THE CURRENT FOLDER
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
     int tilemap_width = 2;  // Number of tiles horizontally in the tilemap

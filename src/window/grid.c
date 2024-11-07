@@ -1,10 +1,29 @@
 #include "window.h"
 #include <stdio.h> // Include for file handling
-#define GRID_WIDTH 32
-#define GRID_HEIGHT 32
-#define TILE_SIZE 16 // Size of each tile in the tilemap
 
-int grid[GRID_WIDTH][GRID_HEIGHT]; // 2D array for storing the grid's state
+static const int GRID_WIDTH = 32;
+static const int GRID_HEIGHT = 32;
+static const int TILE_SIZE = 16; // Size of each tile in the tilemap
+
+int **grid; // 2D array for storing the grid's state
+
+void initialize_grid(int width, int height)
+{
+    grid = malloc(width * sizeof(int *));
+    for (int i = 0; i < width; i++)
+    {
+        grid[i] = malloc(height * sizeof(int));
+    }
+}
+
+void free_grid(int width)
+{
+    for (int i = 0; i < width; i++)
+    {
+        free(grid[i]);
+    }
+    free(grid);
+}
 
 void read_grid_state(const char *filename)
 {
