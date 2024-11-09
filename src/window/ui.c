@@ -14,24 +14,33 @@ void render_ui(SDL_Renderer *renderer)
     SDL_RenderFillRect(renderer, &zoom_out_button);
 }
 
-/*
- * Megadja, hogy a nagyítás gombra kattintottak-e
- * @param x: az egér x koordinátája
- * @param y: az egér y koordinátája
- * @return: igaz, ha a gombra kattintottak, egyébként hamis
- */
-bool is_zoom_in_button_clicked(int x, int y)
+void render_button(SDL_Renderer *renderer, ButtonType button)
 {
-    return (x >= 10 && x <= 60 && y >= 10 && y <= 60);
+    SDL_FRect button_rect;
+    switch (button)
+    {
+    case BUTTON_ZOOM_IN:
+        button_rect = (SDL_FRect){10.0f, 10.0f, 50.0f, 50.0f};
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green color
+        break;
+    case BUTTON_ZOOM_OUT:
+        button_rect = (SDL_FRect){70.0f, 10.0f, 50.0f, 50.0f};
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red color
+        break;
+        // Add more cases for additional buttons
+    }
+    SDL_RenderFillRect(renderer, &button_rect);
 }
 
-/*
- * Megadja, hogy a kicsinyítés gombra kattintottak-e
- * @param x: az egér x koordinátája
- * @param y: az egér y koordinátája
- * @return: igaz, ha a gombra kattintottak, egyébként hamis
- */
-bool is_zoom_out_button_clicked(int x, int y)
+bool is_button_clicked(ButtonType button, int x, int y)
 {
-    return (x >= 70 && x <= 120 && y >= 10 && y <= 60);
+    switch (button)
+    {
+    case BUTTON_ZOOM_IN:
+        return (x >= 10 && x <= 60 && y >= 10 && y <= 60);
+    case BUTTON_ZOOM_OUT:
+        return (x >= 70 && x <= 120 && y >= 10 && y <= 60);
+        // Add more cases for additional buttons
+    }
+    return false;
 }

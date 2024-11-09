@@ -25,8 +25,16 @@ void event_loop(SDL_Renderer *renderer);
 
 // UI függvények
 void render_ui(SDL_Renderer *renderer);
-bool is_zoom_in_button_clicked(int x, int y);
-bool is_zoom_out_button_clicked(int x, int y);
+
+typedef enum
+{
+    BUTTON_ZOOM_IN,
+    BUTTON_ZOOM_OUT,
+    // Add more buttons here
+} ButtonType;
+
+void render_button(SDL_Renderer *renderer, ButtonType button);
+bool is_button_clicked(ButtonType button, int x, int y);
 
 // Takarítás
 void cleanup(SDL_Renderer *renderer, SDL_Window *window);

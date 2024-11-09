@@ -51,14 +51,15 @@ void event_loop(SDL_Renderer *renderer)
                 {
                     int x = event.button.x;
                     int y = event.button.y;
-                    if (is_zoom_in_button_clicked(x, y))
+                    if (is_button_clicked(BUTTON_ZOOM_IN, x, y))
                     {
                         zoom_level += 1;
                     }
-                    else if (is_zoom_out_button_clicked(x, y))
+                    else if (is_button_clicked(BUTTON_ZOOM_OUT, x, y))
                     {
                         zoom_level -= 1;
                     }
+                    // Add more button checks here
                 }
             }
         }
@@ -101,6 +102,9 @@ void event_loop(SDL_Renderer *renderer)
             (float)(tile_size * zoom_level),
             (float)(tile_size * 2 * zoom_level)};
         SDL_RenderTexture(renderer, character_texture, NULL, &character_rect);
+
+        render_button(renderer, BUTTON_ZOOM_IN);
+        render_button(renderer, BUTTON_ZOOM_OUT);
 
         render_ui(renderer);
 

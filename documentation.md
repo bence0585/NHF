@@ -251,7 +251,3 @@ if (is_zoom_out_button_clicked(x, y)) {
     zoom_level -= 1;
 }
 ```
-
-```
-
-```
