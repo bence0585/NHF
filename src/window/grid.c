@@ -1,12 +1,10 @@
 #include "window.h"
 #include <stdio.h> // Include for file handling
+static const int GRID_WIDTH = 32;
+static const int GRID_HEIGHT = 32;
+static const int TILE_SIZE = 16; // Size of each tile in the tilemap
 
-#define GRID_WIDTH 32
-#define GRID_HEIGHT 32
-#define TILE_SIZE 16 // Size of each tile in the tilemap
-
-int grid[GRID_WIDTH][GRID_HEIGHT]; // 2D array for storing the grid's state
-
+int grid[32][32]; // 2D array for storing the grid's state
 void read_grid_state(const char *filename)
 {
     FILE *file = fopen(filename, "r");
@@ -20,8 +18,9 @@ void read_grid_state(const char *filename)
     {
         for (int j = 0; j < GRID_WIDTH; j++)
         {
-            fscanf(file, "%d", &grid[j][i]);
+            fscanf(file, "%2x", &grid[j][i]);
         }
+
     }
 
     fclose(file);
