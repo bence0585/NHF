@@ -1,18 +1,5 @@
 # NHF-Farm Programozói Dokumentáció
 
-## Bevezetés
-
-Ez a dokumentáció bemutatja a NHF-Farm program belső felépítését és működését. A cél az, hogy egy másik programozó könnyen megértse a program felépítését és működését, valamint eligazodjon az ismeretlen forráskódban.
-
-## Megvalósított Módszerek
-
-A program fő célja egy rács alapú játék megvalósítása, amelyben a felhasználó egy karaktert irányít, és különböző műveleteket végezhet a rácson. A program SDL3 könyvtárat használ a grafikus megjelenítéshez és eseménykezeléshez.
-
-## Adatszerkezetek
-
-- `grid[32][32]`: A rács állapotát tároló kétdimenziós tömb. Minden elem egy tile típusát jelöli.
-- `SDL_Texture`: Textúrák tárolására szolgál, például a karakter és a tilemap textúrái.
-
 ## Modulok és Függvények
 
 ### Fő Modulok
@@ -55,8 +42,8 @@ A program fő célja egy rács alapú játék megvalósítása, amelyben a felha
 #### `ui.c`
 
 - `void render_ui(SDL_Renderer *renderer)`: Kirajzolja a felhasználói felület elemeit.
-- `bool is_zoom_in_button_clicked(int x, int y)`: Ellenőrzi, hogy a nagyítás gombra kattintottak-e.
-- `bool is_zoom_out_button_clicked(int x, int y)`: Ellenőrzi, hogy a kicsinyítés gombra kattintottak-e.
+- `void render_button(SDL_Renderer *renderer, ButtonType button)`: Kirajzol egy gombot a megadott típus alapján.
+- `bool is_button_clicked(ButtonType button, int x, int y)`: Ellenőrzi, hogy egy adott típusú gombra kattintottak-e.
 
 ## Függvények Paraméterei és Visszatérési Értékei
 
@@ -145,109 +132,17 @@ A program fő célja egy rács alapú játék megvalósítása, amelyben a felha
   - `renderer`: A renderer mutatója.
 - **Visszatérési érték**: Nincs
 
-### `is_zoom_in_button_clicked(int x, int y)`
+### `render_button(SDL_Renderer *renderer, ButtonType button)`
 
 - **Paraméterek**:
-  - `x`: Az egér x koordinátája.
-  - `y`: Az egér y koordinátája.
-- **Visszatérési érték**: `bool` - Igaz, ha a nagyítás gombra kattintottak, egyébként hamis.
+  - `renderer`: A renderer mutatója.
+  - `button`: A gomb típusa.
+- **Visszatérési érték**: Nincs
 
-### `is_zoom_out_button_clicked(int x, int y)`
+### `is_button_clicked(ButtonType button, int x, int y)`
 
 - **Paraméterek**:
+  - `button`: A gomb típusa.
   - `x`: Az egér x koordinátája.
   - `y`: Az egér y koordinátája.
-- **Visszatérési érték**: `bool` - Igaz, ha a kicsinyítés gombra kattintottak, egyébként hamis.
-
-## Példák
-
-### `initialize_SDL()`
-
-```c
-if (initialize_SDL() < 0) {
-    return -1;
-}
-```
-
-### `create_window(const char *title, int width, int height)`
-
-```c
-SDL_Window *window = create_window("Ablak", 1280, 720);
-if (window == NULL) {
-    return -2;
-}
-```
-
-### `create_renderer(SDL_Window *window)`
-
-```c
-SDL_Renderer *renderer = create_renderer(window);
-if (renderer == NULL) {
-    return -3;
-}
-```
-
-### `cleanup(SDL_Renderer *renderer, SDL_Window *window)`
-
-```c
-cleanup(renderer, window);
-```
-
-### `read_grid_state(const char *filename)`
-
-```c
-read_grid_state("../src/grid_state.txt");
-```
-
-### `render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y)`
-
-```c
-render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
-```
-
-### `convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y)`
-
-```c
-int grid_x, grid_y;
-convert_to_grid_coordinates(character_x, character_y, tile_size, &grid_x, &grid_y);
-```
-
-### `highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y)`
-
-```c
-highlight_grid_square(renderer, grid_x, grid_y, tile_size, zoom_level, offset_x, offset_y);
-```
-
-### `load_texture(SDL_Renderer *renderer, const char *file_path)`
-
-```c
-SDL_Texture *texture = load_texture(renderer, "../src/img/texture.png");
-```
-
-### `event_loop(SDL_Renderer *renderer)`
-
-```c
-event_loop(renderer);
-```
-
-### `render_ui(SDL_Renderer *renderer)`
-
-```c
-render_ui(renderer);
-```
-
-### `is_zoom_in_button_clicked(int x, int y)`
-
-```c
-if (is_zoom_in_button_clicked(x, y)) {
-    zoom_level += 1;
-}
-```
-
-### `is_zoom_out_button_clicked(int x, int y)`
-
-```c
-if (is_zoom_out_button_clicked(x, y)) {
-    zoom_level -= 1;
-}
-```
+- **Visszatérési érték**: `bool` - Igaz, ha a gombra kattintottak, egyébként hamis.

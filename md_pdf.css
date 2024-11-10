@@ -1,0 +1,116 @@
+/* Alap beállítások */
+body {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 20px;
+  }
+  
+  /* Címek és alcímek */
+  h1, h2, h3, h4, h5, h6 {
+    color: #00aaff;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  
+  /* Listaelemek */
+  ul {
+    margin-left: 20px;
+    list-style-type: disc;
+  }
+  
+  ol {
+    margin-left: 20px;
+    list-style-type: decimal;
+  }
+  
+  li {
+    margin: 5px 0;
+  }
+  
+  /* Táblázatok */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+    background-color: #282828;
+  }
+  
+  th, td {
+    padding: 10px;
+    border: 1px solid #444;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #333;
+    color: #00aaff;
+  }
+  
+  td {
+    color: #e0e0e0;
+  }
+  
+  /* Kiemelt szöveg, kódblokkok */
+  code {
+    background-color: #333;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #ffcc00;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  
+  pre {
+    background-color: #282828;
+    padding: 15px;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 0.9em;
+    overflow-x: auto;
+  }
+  
+  /* Linkek */
+  a {
+    color: #00aaff;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Kiírt blokkok és jegyzetek */
+  blockquote {
+    background-color: #2e2e2e;
+    color: #999;
+    padding: 15px;
+    margin: 20px 0;
+    border-left: 5px solid #00aaff;
+    font-style: italic;
+  }
+  
+  /* Gombstílus (opcionális) */
+  button {
+    background-color: #00aaff;
+    color: #1e1e1e;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0088cc;
+  }
+  
+  /* Lábléc */
+  footer {
+    margin-top: 40px;
+    font-size: 0.8em;
+    text-align: center;
+    color: #666;
+  }
+  

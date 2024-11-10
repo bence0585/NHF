@@ -96,9 +96,10 @@ void event_loop(SDL_Renderer *renderer)
 
         highlight_grid_square(renderer, grid_x, grid_y, tile_size, zoom_level, offset_x, offset_y);
 
+        // Adjust the character's rendering position
         SDL_FRect character_rect = {
             (float)(screen_width / 2 - (tile_size * zoom_level) / 2),
-            (float)(screen_height / 2 - (tile_size * zoom_level) / 2),
+            (float)(screen_height / 2 - (tile_size * 2 * zoom_level) + (tile_size * zoom_level) / 2),
             (float)(tile_size * zoom_level),
             (float)(tile_size * 2 * zoom_level)};
         SDL_RenderTexture(renderer, character_texture, NULL, &character_rect);
