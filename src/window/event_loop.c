@@ -1,6 +1,62 @@
 #include <stdio.h>
 #include "window.h"
 
+void update_animation(AnimationController *anim_ctrl)
+{
+    if (anim_ctrl->is_walking)
+    {
+        anim_ctrl->frame_delay_counter++;
+        if (anim_ctrl->frame_delay_counter >= anim_ctrl->frame_delay)
+        {
+            anim_ctrl->frame_delay_counter = 0;
+            anim_ctrl->frame = 6 + (anim_ctrl->frame + 1) % 6; // Walking frames 7-12
+        }
+    }
+    else
+    {
+        anim_ctrl->frame_delay_counter++;
+        if (anim_ctrl->frame_delay_counter >= anim_ctrl->frame_delay)
+        {
+            anim_ctrl->frame_delay_counter = 0;
+            if (anim_ctrl->frame < 6)
+            {
+                anim_ctrl->frame++;
+            }
+            else
+            {
+                anim_ctrl->frame--;
+            }
+        }
+    }
+}
+
+void save_game_state(const char *filename, int character_x, int character_y)
+{
+    FILE *file = fopen(filename, "w");
+    if (file == NULL)
+    {
+        SDL_Log("Error opening save file: %s", strerror(errno));
+        return;
+    }
+    fprintf(file, "%d %d\n", character_x, character_y);
+    fclose(file);
+}
+
+void load_game_state(const char *filename, int *character_x, int *character_y)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        SDL_Log("Save file not found, creating a new one.");
+        *character_x = 0;
+        *character_y = 0;
+        save_game_state(filename, *character_x, *character_y);
+        return;
+    }
+    fscanf(file, "%d %d", character_x, character_y);
+    fclose(file);
+}
+
 /*
  * A fő eseménykezelő függvény
  * @param renderer: a kirajzolást végző renderer
@@ -10,16 +66,25 @@ void event_loop(SDL_Renderer *renderer)
     SDL_Event event;
     int quit = 0;
     double zoom_level = 1;
-    int character_x = 640, character_y = 360; // Ez is változni fog
-    int tile_size = 32;
+    const int tilemap_width = 16;
+    const int tilemap_height = tilemap_width;
+    const int character_tile_width = tilemap_width;
+    const int character_tile_height = tilemap_width * 2;
+    int tile_size = tilemap_width * 2;
+    int character_x = 0, character_y = 0; // Start at top-left tile
 
-    SDL_Texture *character_texture = load_texture(renderer, "../src/img/character.png");
+    load_game_state("../src/save_state.txt", &character_x, &character_y);
+
+    // SDL_Texture *character_texture = load_texture(renderer, "../src/img/character.png");
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
-    const int tilemap_width = 16;
-    const int tilemap_height = 16;
+    SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
+
+    SDL_Texture *character_tileset = load_texture(renderer, "../src/img/playerTilemap.png");
 
     read_grid_state("../src/grid_state.txt");
+
+    AnimationController anim_ctrl = {0, 6, 10, 0, DIRECTION_DOWN, false};
 
     /*
     * A fő eseménykezelő ciklus
@@ -59,53 +124,88 @@ void event_loop(SDL_Renderer *renderer)
                     {
                         zoom_level -= 1;
                     }
+                    else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
+                    {
+                        save_game_state("../src/save_state.txt", character_x, character_y);
+                    }
                     // Add more button checks here
                 }
             }
         }
 
+        anim_ctrl.is_walking = false;
         if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP])
         {
-            character_y -= 2;
+            if (character_y > 0)
+            {
+                character_y -= 2;
+                anim_ctrl.direction = DIRECTION_UP;
+                anim_ctrl.is_walking = true;
+            }
         }
         if (state[SDL_SCANCODE_S] || state[SDL_SCANCODE_DOWN])
         {
-            character_y += 2;
+            if (character_y < (GRID_HEIGHT * TILE_SIZE - character_tile_height))
+            {
+                character_y += 2;
+                anim_ctrl.direction = DIRECTION_DOWN;
+                anim_ctrl.is_walking = true;
+            }
         }
         if (state[SDL_SCANCODE_A] || state[SDL_SCANCODE_LEFT])
         {
-            character_x -= 2;
+            if (character_x > 0)
+            {
+                character_x -= 2;
+                anim_ctrl.direction = DIRECTION_LEFT;
+                anim_ctrl.is_walking = true;
+            }
         }
         if (state[SDL_SCANCODE_D] || state[SDL_SCANCODE_RIGHT])
         {
-            character_x += 2;
+            if (character_x < (GRID_WIDTH * TILE_SIZE - character_tile_width))
+            {
+                character_x += 2;
+                anim_ctrl.direction = DIRECTION_RIGHT;
+                anim_ctrl.is_walking = true;
+            }
         }
+
+        update_animation(&anim_ctrl);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0x0, 0x0);
         SDL_RenderClear(renderer);
 
         int screen_width, screen_height;
         SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
-        int offset_x = screen_width / 2 - character_x * zoom_level - (tile_size * zoom_level) / 2;
-        int offset_y = screen_height / 2 - character_y * zoom_level - (tile_size * zoom_level) / 2;
+        int offset_x = screen_width / 2 - character_x * zoom_level - (tilemap_width * zoom_level) / 2;
+        int offset_y = screen_height / 2 - character_y * zoom_level - (tilemap_height * zoom_level) / 2;
 
         render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         int grid_x, grid_y;
-        convert_to_grid_coordinates(character_x, character_y, tile_size, &grid_x, &grid_y);
+        convert_to_grid_coordinates(character_x, character_y, tilemap_width, &grid_x, &grid_y);
 
-        highlight_grid_square(renderer, grid_x, grid_y, tile_size, zoom_level, offset_x, offset_y);
+        highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
 
         // Adjust the character's rendering position
         SDL_FRect character_rect = {
-            (float)(screen_width / 2 - (tile_size * zoom_level) / 2),
-            (float)(screen_height / 2 - (tile_size * 2 * zoom_level) + (tile_size * zoom_level) / 2),
-            (float)(tile_size * zoom_level),
-            (float)(tile_size * 2 * zoom_level)};
-        SDL_RenderTexture(renderer, character_texture, NULL, &character_rect);
+            (float)(screen_width / 2 - (character_tile_width * zoom_level)),
+            (float)(screen_height / 2 - (character_tile_height * zoom_level)),
+            (float)(character_tile_width * zoom_level),
+            (float)(character_tile_height * zoom_level)};
+
+        // Calculate the source rectangle for the character animation
+        int src_x = anim_ctrl.frame * character_tile_width;
+        int src_y = anim_ctrl.direction * character_tile_height;
+        SDL_FRect character_src_rect = {src_x, src_y, character_tile_width, character_tile_height};
+
+        // Render the character from the tileset
+        SDL_RenderTexture(renderer, character_tileset, &character_src_rect, &character_rect);
 
         render_button(renderer, BUTTON_ZOOM_IN);
         render_button(renderer, BUTTON_ZOOM_OUT);
+        render_button(renderer, BUTTON_SAVE_GAME);
 
         render_ui(renderer);
 
@@ -113,6 +213,6 @@ void event_loop(SDL_Renderer *renderer)
         SDL_Delay(10);
     }
 
-    SDL_DestroyTexture(character_texture);
+    SDL_DestroyTexture(character_tileset);
     SDL_DestroyTexture(tilemap);
 }

@@ -1,8 +1,5 @@
 #include "window.h"
 #include <stdio.h>
-static const int GRID_WIDTH = 32;
-static const int GRID_HEIGHT = 32;
-static const int TILE_SIZE = 16;
 
 int grid[32][32]; // BORZALMAS MEGOLDÁS, DE MOST EZ VAN ;(
 
@@ -42,7 +39,7 @@ void read_grid_state(const char *filename)
 void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y)
 {
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
-    int tile_size = 32 * zoom_level;
+    int tile_size = tilemap_width * zoom_level;
 
     for (int i = 0; i < GRID_WIDTH; i++)
     {
