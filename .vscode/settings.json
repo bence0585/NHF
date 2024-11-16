@@ -3,7 +3,8 @@
 		"*.ejs": "html",
 		"sdl_net.h": "c",
 		"sdl_image.h": "c",
-		"window.h": "c"
+		"window.h": "c",
+		"sdl_ttf.h": "c"
 	},
 	"functionHeaderExtension.headerFilePath": "c:\\Users\\gbski\\Documents\\NHF-Farm\\NHF\\src\\window\\window.h"
 }

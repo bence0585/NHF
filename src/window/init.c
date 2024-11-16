@@ -1,4 +1,5 @@
 #include "window.h"
+#include <SDL3_ttf/SDL_ttf.h>
 
 int initialize_SDL()
 {
@@ -9,7 +10,16 @@ int initialize_SDL()
     }
     return result;
 }
-
+int initialize_SDLTTF()
+{
+    int result = TTF_Init();
+    if (result < 0)
+    {
+        SDL_Log("TTF_Init() Error: %s", SDL_GetError());
+        return -1;
+    }
+    return 0;
+}
 SDL_Window *create_window(const char *title, int width, int height)
 {
     SDL_Window *window = SDL_CreateWindow(title, width, height, 0);

@@ -3,9 +3,14 @@
 
 #include <SDL3/SDL.h>
 #include <stdbool.h>
-static const int GRID_WIDTH = 256;
-static const int GRID_HEIGHT = 256;
-static const int TILE_SIZE = 16;
+
+typedef struct
+{
+    int width;
+    int height;
+    int **physical_layer;
+    int **optical_layer;
+} Grid;
 
 // Animation types
 typedef enum
@@ -30,13 +35,21 @@ typedef struct
 // Inicializálás
 
 int initialize_SDL();
+int initialize_SDLTTF();
 SDL_Window *create_window(const char *title, int width, int height);
 SDL_Renderer *create_renderer(SDL_Window *window);
 
+// Text rendering functions
+int initialize_font(const char *font_path, int font_size);
+void render_text(SDL_Renderer *renderer, const char *text, SDL_Color color, float x, float y, float w, float h);
+void cleanup_font();
+
 // Rács függvények
-void read_grid_state(const char *filename);
-void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
-void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height);
+Grid *create_grid(int width, int height);
+void destroy_grid(Grid *grid);
+void read_grid_state(const char *filename, Grid *grid);
+void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
+void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height);
 // Korrdinátaváltó függvény
 void convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y);
 // Rács-négyzet kiemelése

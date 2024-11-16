@@ -15,6 +15,7 @@
                 "src/window/grid.c",
                 "src/window/texture.c",
                 "src/window/event_loop.c",
+                "src/window/text_renderer.c",
                 "src/window/ui.c",
                 "-lSDL3",
                 "-lSDL3_image",

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "window.h"
-
 void update_animation(AnimationController *anim_ctrl)
 {
     anim_ctrl->frame_delay_counter++;
@@ -78,21 +77,32 @@ void event_loop(SDL_Renderer *renderer)
 
     load_game_state("../src/save_state.txt", &character_x, &character_y);
 
-    // SDL_Texture *character_texture = load_texture(renderer, "../src/img/character.png");
-
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture *character_tileset = load_texture(renderer, "../src/img/playerTilemap.png");
 
-    read_grid_state("../src/grid_state.txt");
+    Grid *grid = create_grid(256, 256);
+    read_grid_state("../src/grid_state.txt", grid);
 
     AnimationController anim_ctrl = {0, 6, 10, 0, 1, DIRECTION_DOWN, false}; // Initialize frame_direction to 1
 
-    /*A fő eseménykezelő ciklus*/
+    Uint32 start_time = SDL_GetTicks();
+    int frame_count = 0;
+    int fps = 0;
+
     static const int movement_speed = 1;
     while (!quit)
     {
+        Uint32 frame_start = SDL_GetTicks();
+        frame_count++;
+        if (frame_start - start_time >= 1000)
+        {
+            fps = frame_count;
+            frame_count = 0;
+            start_time = frame_start;
+        }
+
         SDL_PumpEvents();
         const bool *state = SDL_GetKeyboardState(NULL);
 
@@ -146,7 +156,7 @@ void event_loop(SDL_Renderer *renderer)
         }
         if (state[SDL_SCANCODE_S] || state[SDL_SCANCODE_DOWN])
         {
-            if (character_y < (GRID_HEIGHT * TILE_SIZE - character_tile_height))
+            if (character_y < (grid->height * tile_size - character_tile_height))
             {
                 character_y += movement_speed;
                 anim_ctrl.direction = DIRECTION_DOWN;
@@ -164,7 +174,7 @@ void event_loop(SDL_Renderer *renderer)
         }
         if (state[SDL_SCANCODE_D] || state[SDL_SCANCODE_RIGHT])
         {
-            if (character_x < (GRID_WIDTH * TILE_SIZE - character_tile_width))
+            if (character_x < (grid->width * tile_size - character_tile_width))
             {
                 character_x += movement_speed;
                 anim_ctrl.direction = DIRECTION_RIGHT;
@@ -174,7 +184,7 @@ void event_loop(SDL_Renderer *renderer)
 
         update_animation(&anim_ctrl);
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0x0, 0x0);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
         int screen_width, screen_height;
@@ -182,8 +192,8 @@ void event_loop(SDL_Renderer *renderer)
         int offset_x = screen_width / 2 - character_x * zoom_level - (tilemap_width * zoom_level) / 2;
         int offset_y = screen_height / 2 - character_y * zoom_level - (tilemap_height * zoom_level) / 2;
 
-        render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
-        render_visible_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y, screen_width, screen_height);
+        render_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
+        render_visible_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y, screen_width, screen_height);
 
         int grid_x, grid_y;
         convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
@@ -232,10 +242,21 @@ void event_loop(SDL_Renderer *renderer)
 
         render_ui(renderer);
 
+        SDL_Color white = {255, 255, 255, 255};
+        char fps_text[10];
+        snprintf(fps_text, sizeof(fps_text), "FPS: %d", fps);
+        render_text(renderer, fps_text, white, 10, 10, 100, 30);
+
         SDL_RenderPresent(renderer);
-        SDL_Delay(10);
+
+        Uint32 frame_time = SDL_GetTicks() - frame_start;
+        if (frame_time < 16)
+        {
+            SDL_Delay(16 - frame_time);
+        }
     }
 
+    destroy_grid(grid);
     SDL_DestroyTexture(character_tileset);
     SDL_DestroyTexture(tilemap);
 }

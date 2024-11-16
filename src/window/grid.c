@@ -1,13 +1,37 @@
 #include "window.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-int grid[256][256]; // BORZALMAS MEGOLDÁS, DE MOST EZ VAN ;(
+Grid *create_grid(int width, int height)
+{
+    Grid *grid = (Grid *)malloc(sizeof(Grid));
+    grid->width = width;
+    grid->height = height;
 
-/*
- * A rácsot feltölti a megadott számokkal
- * @param value: a rácsba írandó szám
- */
-void read_grid_state(const char *filename)
+    grid->physical_layer = (int **)malloc(width * sizeof(int *));
+    grid->optical_layer = (int **)malloc(width * sizeof(int *));
+    for (int i = 0; i < width; i++)
+    {
+        grid->physical_layer[i] = (int *)malloc(height * sizeof(int));
+        grid->optical_layer[i] = (int *)malloc(height * sizeof(int));
+    }
+
+    return grid;
+}
+
+void destroy_grid(Grid *grid)
+{
+    for (int i = 0; i < grid->width; i++)
+    {
+        free(grid->physical_layer[i]);
+        free(grid->optical_layer[i]);
+    }
+    free(grid->physical_layer);
+    free(grid->optical_layer);
+    free(grid);
+}
+
+void read_grid_state(const char *filename, Grid *grid)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL)
@@ -16,60 +40,47 @@ void read_grid_state(const char *filename)
         return;
     }
 
-    for (int i = 0; i < GRID_HEIGHT; i++)
+    for (int i = 0; i < grid->height; i++)
     {
-        for (int j = 0; j < GRID_WIDTH; j++)
+        for (int j = 0; j < grid->width; j++)
         {
-            fscanf(file, "%2x", &grid[j][i]);
+            fscanf(file, "%2x", &grid->physical_layer[j][i]);
+            fscanf(file, "%2x", &grid->optical_layer[j][i]);
         }
     }
 
     fclose(file);
 }
-/*
- * Kirajzolja a rácsot a megadott tilemap segítségével
- * @param renderer: a kirajzolást végző renderer
- * @param tilemap: a tilemap textúra
- * @param tilemap_width: a tilemap szélessége
- * @param tilemap_height: a tilemap magassága
- * @param zoom_level: a nagyítás mértéke
- * @param offset_x: az x tengelyen eltolás
- * @param offset_y: az y tengelyen eltolás
- */
-void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y)
+
+void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y)
 {
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
     int tile_size = tilemap_width * zoom_level;
 
-    for (int i = 0; i < GRID_WIDTH; i++)
+    for (int i = 0; i < grid->width; i++)
     {
-        for (int j = 0; j < GRID_HEIGHT; j++)
+        for (int j = 0; j < grid->height; j++)
         {
             SDL_FRect dest = {offset_x + i * tile_size, offset_y + j * tile_size, (float)tile_size, (float)tile_size};
 
-            int tile_type = grid[i][j];
-            int src_x = (tile_type % tilemap_width) * TILE_SIZE;
-            int src_y = (tile_type / tilemap_width) * TILE_SIZE;
+            int tile_type = grid->physical_layer[i][j];
+            int src_x = (tile_type % tilemap_width) * tile_size;
+            int src_y = (tile_type / tilemap_width) * tile_size;
 
-            SDL_FRect src = {src_x, src_y, TILE_SIZE, TILE_SIZE};
+            SDL_FRect src = {src_x, src_y, tile_size, tile_size};
+            SDL_RenderTexture(renderer, tilemap, &src, &dest);
+
+            tile_type = grid->optical_layer[i][j];
+            src_x = (tile_type % tilemap_width) * tile_size;
+            src_y = (tile_type / tilemap_width) * tile_size;
+
+            src = (SDL_FRect){src_x, src_y, tile_size, tile_size};
             SDL_RenderTexture(renderer, tilemap, &src, &dest);
         }
     }
 }
 
-/*
- * Kirajzolja a látható rácsot a megadott tilemap segítségével
- * @param renderer: a kirajzolást végző renderer
- * @param tilemap: a tilemap textúra
- * @param tilemap_width: a tilemap szélessége
- * @param tilemap_height: a tilemap magassága
- * @param zoom_level: a nagyítás mértéke
- * @param offset_x: az x tengelyen eltolás
- * @param offset_y: az y tengelyen eltolás
- * @param screen_width: a képernyő szélessége
- * @param screen_height: a képernyő magassága
- */
-void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height)
+void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height)
 {
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
     int tile_size = tilemap_width * zoom_level;
@@ -83,10 +94,10 @@ void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilem
         start_x = 0;
     if (start_y < 0)
         start_y = 0;
-    if (end_x > GRID_WIDTH)
-        end_x = GRID_WIDTH;
-    if (end_y > GRID_HEIGHT)
-        end_y = GRID_HEIGHT;
+    if (end_x > grid->width)
+        end_x = grid->width;
+    if (end_y > grid->height)
+        end_y = grid->height;
 
     for (int i = start_x; i < end_x; i++)
     {
@@ -94,42 +105,29 @@ void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilem
         {
             SDL_FRect dest = {offset_x + i * tile_size, offset_y + j * tile_size, (float)tile_size, (float)tile_size};
 
-            int tile_type = grid[i][j];
-            int src_x = (tile_type % tilemap_width) * TILE_SIZE;
-            int src_y = (tile_type / tilemap_width) * TILE_SIZE;
+            int tile_type = grid->physical_layer[i][j];
+            int src_x = (tile_type % tilemap_width) * tile_size;
+            int src_y = (tile_type / tilemap_width) * tile_size;
 
-            SDL_FRect src = {src_x, src_y, TILE_SIZE, TILE_SIZE};
+            SDL_FRect src = {src_x, src_y, tile_size, tile_size};
+            SDL_RenderTexture(renderer, tilemap, &src, &dest);
+
+            tile_type = grid->optical_layer[i][j];
+            src_x = (tile_type % tilemap_width) * tile_size;
+            src_y = (tile_type / tilemap_width) * tile_size;
+
+            src = (SDL_FRect){src_x, src_y, tile_size, tile_size};
             SDL_RenderTexture(renderer, tilemap, &src, &dest);
         }
     }
 }
 
-/*
- * A megadott karakter koordinátákat átkonvertálja rács koordinátákra
- * @param character_x: a karakter x koordinátája
- * @param character_y: a karakter y koordinátája
- * @param tile_size: a rács mérete
- * @param grid_x: a rács x koordinátája
- * @param grid_y: a rács y koordinátája
- */
 void convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y)
 {
     *grid_x = character_x / tile_size;
     *grid_y = character_y / tile_size;
 }
 
-/*
- * Körberajzolja a négyzetet, amely a megadott koordinátákon található
- * A négyzetet piros színnel rajzolja ki
- * A négyzetet háromszor rajzolja ki, hogy vastagabb legyen
- * @param renderer: a kirajzolást végző renderer
- * @param grid_x: a négyzet x koordinátája a rácsban
- * @param grid_y: a négyzet y koordinátája a rácsban
- * @param tile_size: a négyzet mérete
- * @param zoom_level: a nagyítás mértéke
- * @param offset_x: az x tengelyen eltolás
- * @param offset_y: az y tengelyen eltolás
- */
 void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y)
 {
     SDL_FRect highlight_rect = {
@@ -150,18 +148,6 @@ void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
     }
 }
 
-/*
- * Körberajzolja a négyzetet, amely a megadott koordinátákon található
- * A négyzetet rózsaszín színnel rajzolja ki
- * A négyzetet háromszor rajzolja ki, hogy vastagabb legyen
- * @param renderer: a kirajzolást végző renderer
- * @param grid_x: a négyzet x koordinátája a rácsban
- * @param grid_y: a négyzet y koordinátája a rácsban
- * @param tile_size: a négyzet mérete
- * @param zoom_level: a nagyítás mértéke
- * @param offset_x: az x tengelyen eltolás
- * @param offset_y: az y tengelyen eltolás
- */
 void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y)
 {
     SDL_FRect highlight_rect = {

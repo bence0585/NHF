@@ -7,7 +7,7 @@ cd DLLs
 rm -v main.exe
 
 # Compile the new executable
-gcc -I../libs/include -L../libs/lib -o main.exe ../src/main.c ../src/window/init.c ../src/window/grid.c ../src/window/texture.c ../src/window/event_loop.c ../src/window/ui.c -lSDL3 -lSDL3_image
+gcc -I../libs/include -L../libs/lib -o main.exe ../src/main.c ../src/window/init.c ../src/window/grid.c ../src/window/texture.c ../src/window/event_loop.c ../src/window/ui.c ../src/window/text_renderer.c -lSDL3 -lSDL3_image -lSDL3_ttf
 
 # Run the new executable
 ./main.exe
