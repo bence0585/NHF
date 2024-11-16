@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include "window.h"
 
@@ -185,7 +186,7 @@ void event_loop(SDL_Renderer *renderer)
         render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         int grid_x, grid_y;
-        convert_to_grid_coordinates(character_x, character_y, tilemap_width, &grid_x, &grid_y);
+        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
 
         highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
 
