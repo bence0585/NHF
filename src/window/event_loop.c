@@ -3,30 +3,33 @@
 
 void update_animation(AnimationController *anim_ctrl)
 {
+    anim_ctrl->frame_delay_counter++;
+    if (anim_ctrl->frame_delay_counter < anim_ctrl->frame_delay)
+    {
+        return;
+    }
+
+    anim_ctrl->frame_delay_counter = 0;
+
     if (anim_ctrl->is_walking)
     {
-        anim_ctrl->frame_delay_counter++;
-        if (anim_ctrl->frame_delay_counter >= anim_ctrl->frame_delay)
-        {
-            anim_ctrl->frame_delay_counter = 0;
-            anim_ctrl->frame = 6 + (anim_ctrl->frame + 1) % 6; // Walking frames 7-12
-        }
+        anim_ctrl->frame = 6 + (anim_ctrl->frame + 1) % 6; // Walking frames 6-11
+        return;
+    }
+
+    // Idle animation: 0-1-2-3-4-5-4-3-2-1-0
+    if (anim_ctrl->frame < 5 && anim_ctrl->frame_direction == 1)
+    {
+        anim_ctrl->frame++;
+    }
+    else if (anim_ctrl->frame > 0 && anim_ctrl->frame_direction == -1)
+    {
+        anim_ctrl->frame--;
     }
     else
     {
-        anim_ctrl->frame_delay_counter++;
-        if (anim_ctrl->frame_delay_counter >= anim_ctrl->frame_delay)
-        {
-            anim_ctrl->frame_delay_counter = 0;
-            if (anim_ctrl->frame < 6)
-            {
-                anim_ctrl->frame++;
-            }
-            else
-            {
-                anim_ctrl->frame--;
-            }
-        }
+        anim_ctrl->frame_direction *= -1;
+        anim_ctrl->frame += anim_ctrl->frame_direction;
     }
 }
 
@@ -84,12 +87,9 @@ void event_loop(SDL_Renderer *renderer)
 
     read_grid_state("../src/grid_state.txt");
 
-    AnimationController anim_ctrl = {0, 6, 10, 0, DIRECTION_DOWN, false};
+    AnimationController anim_ctrl = {0, 6, 10, 0, 1, DIRECTION_DOWN, false}; // Initialize frame_direction to 1
 
-    /*
-    * A fő eseménykezelő ciklus
-
-    */
+    /*A fő eseménykezelő ciklus*/
     static const int movement_speed = 1;
     while (!quit)
     {
@@ -185,14 +185,35 @@ void event_loop(SDL_Renderer *renderer)
         render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         int grid_x, grid_y;
-        convert_to_grid_coordinates(character_x, character_y, tilemap_width, &grid_x, &grid_y);
+        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
 
         highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
+
+        // Calculate the grid coordinates the player is looking at
+        int look_x = grid_x;
+        int look_y = grid_y;
+        switch (anim_ctrl.direction)
+        {
+        case DIRECTION_UP:
+            look_y -= 1;
+            break;
+        case DIRECTION_DOWN:
+            look_y += 1;
+            break;
+        case DIRECTION_LEFT:
+            look_x -= 1;
+            break;
+        case DIRECTION_RIGHT:
+            look_x += 1;
+            break;
+        }
+
+        highlight_look_square(renderer, look_x, look_y, tilemap_width, zoom_level, offset_x, offset_y);
 
         // Adjust the character's rendering position
         SDL_FRect character_rect = {
             (float)(screen_width / 2 - (character_tile_width * zoom_level)),
-            (float)(screen_height / 2 - (character_tile_height * zoom_level)),
+            (float)(screen_height / 2 - (character_tile_height * zoom_level) + (8 * zoom_level)),
             (float)(character_tile_width * zoom_level),
             (float)(character_tile_height * zoom_level)};
 
@@ -206,7 +227,7 @@ void event_loop(SDL_Renderer *renderer)
 
         render_button(renderer, BUTTON_ZOOM_IN);
         render_button(renderer, BUTTON_ZOOM_OUT);
-        render_button(renderer, BUTTON_SAVE_GAME);
+        // render_button(renderer, BUTTON_SAVE_GAME); // Commented out
 
         render_ui(renderer);
 

@@ -22,6 +22,7 @@ typedef struct
     int max_frames;
     int frame_delay;
     int frame_delay_counter;
+    int frame_direction; // New property for idle animation direction
     Direction direction;
     bool is_walking;
 } AnimationController;
@@ -39,6 +40,7 @@ void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width
 void convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y);
 // Rács-négyzet kiemelése
 void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y);
+void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y);
 // Textúra függvények
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 

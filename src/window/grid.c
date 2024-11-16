@@ -101,3 +101,35 @@ void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
         highlight_rect.h += 2;
     }
 }
+
+/*
+ * Körberajzolja a négyzetet, amely a megadott koordinátákon található
+ * A négyzetet rózsaszín színnel rajzolja ki
+ * A négyzetet háromszor rajzolja ki, hogy vastagabb legyen
+ * @param renderer: a kirajzolást végző renderer
+ * @param grid_x: a négyzet x koordinátája a rácsban
+ * @param grid_y: a négyzet y koordinátája a rácsban
+ * @param tile_size: a négyzet mérete
+ * @param zoom_level: a nagyítás mértéke
+ * @param offset_x: az x tengelyen eltolás
+ * @param offset_y: az y tengelyen eltolás
+ */
+void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y)
+{
+    SDL_FRect highlight_rect = {
+        offset_x + grid_x * tile_size * zoom_level,
+        offset_y + grid_y * tile_size * zoom_level,
+        tile_size * zoom_level,
+        tile_size * zoom_level};
+
+    SDL_SetRenderDrawColor(renderer, 255, 192, 203, 255); // Pink color
+
+    for (int i = 0; i < 3; i++)
+    {
+        SDL_RenderRect(renderer, &highlight_rect);
+        highlight_rect.x -= 1;
+        highlight_rect.y -= 1;
+        highlight_rect.w += 2;
+        highlight_rect.h += 2;
+    }
+}

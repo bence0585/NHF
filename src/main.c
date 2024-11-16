@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     }
 
     SDL_Log("SDL3 init");
+    SDL_Log("SDL3ssss");
 
     event_loop(renderer);
 
