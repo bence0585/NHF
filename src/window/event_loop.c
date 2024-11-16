@@ -183,6 +183,7 @@ void event_loop(SDL_Renderer *renderer)
         int offset_y = screen_height / 2 - character_y * zoom_level - (tilemap_height * zoom_level) / 2;
 
         render_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
+        render_visible_grid(renderer, tilemap, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y, screen_width, screen_height);
 
         int grid_x, grid_y;
         convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);

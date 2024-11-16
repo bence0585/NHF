@@ -3,8 +3,8 @@
 
 #include <SDL3/SDL.h>
 #include <stdbool.h>
-static const int GRID_WIDTH = 32;
-static const int GRID_HEIGHT = 32;
+static const int GRID_WIDTH = 256;
+static const int GRID_HEIGHT = 256;
 static const int TILE_SIZE = 16;
 
 // Animation types
@@ -36,6 +36,7 @@ SDL_Renderer *create_renderer(SDL_Window *window);
 // Rács függvények
 void read_grid_state(const char *filename);
 void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
+void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height);
 // Korrdinátaváltó függvény
 void convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y);
 // Rács-négyzet kiemelése

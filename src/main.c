@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    SDL_Window *window = create_window("Ablak", 1280, 720);
+    SDL_Window *window = create_window("Ablak", 1600, 900);
     if (window == NULL)
     {
         return -2;

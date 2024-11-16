@@ -1,7 +1,7 @@
 #include "window.h"
 #include <stdio.h>
 
-int grid[32][32]; // BORZALMAS MEGOLDÁS, DE MOST EZ VAN ;(
+int grid[256][256]; // BORZALMAS MEGOLDÁS, DE MOST EZ VAN ;(
 
 /*
  * A rácsot feltölti a megadott számokkal
@@ -56,6 +56,54 @@ void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width
         }
     }
 }
+
+/*
+ * Kirajzolja a látható rácsot a megadott tilemap segítségével
+ * @param renderer: a kirajzolást végző renderer
+ * @param tilemap: a tilemap textúra
+ * @param tilemap_width: a tilemap szélessége
+ * @param tilemap_height: a tilemap magassága
+ * @param zoom_level: a nagyítás mértéke
+ * @param offset_x: az x tengelyen eltolás
+ * @param offset_y: az y tengelyen eltolás
+ * @param screen_width: a képernyő szélessége
+ * @param screen_height: a képernyő magassága
+ */
+void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height)
+{
+    SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
+    int tile_size = tilemap_width * zoom_level;
+
+    int start_x = -offset_x / tile_size;
+    int start_y = -offset_y / tile_size;
+    int end_x = (screen_width - offset_x) / tile_size + 1;
+    int end_y = (screen_height - offset_y) / tile_size + 1;
+
+    if (start_x < 0)
+        start_x = 0;
+    if (start_y < 0)
+        start_y = 0;
+    if (end_x > GRID_WIDTH)
+        end_x = GRID_WIDTH;
+    if (end_y > GRID_HEIGHT)
+        end_y = GRID_HEIGHT;
+
+    for (int i = start_x; i < end_x; i++)
+    {
+        for (int j = start_y; j < end_y; j++)
+        {
+            SDL_FRect dest = {offset_x + i * tile_size, offset_y + j * tile_size, (float)tile_size, (float)tile_size};
+
+            int tile_type = grid[i][j];
+            int src_x = (tile_type % tilemap_width) * TILE_SIZE;
+            int src_y = (tile_type / tilemap_width) * TILE_SIZE;
+
+            SDL_FRect src = {src_x, src_y, TILE_SIZE, TILE_SIZE};
+            SDL_RenderTexture(renderer, tilemap, &src, &dest);
+        }
+    }
+}
+
 /*
  * A megadott karakter koordinátákat átkonvertálja rács koordinátákra
  * @param character_x: a karakter x koordinátája
