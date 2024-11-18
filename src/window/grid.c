@@ -9,11 +9,9 @@ Grid *create_grid(int width, int height)
     grid->height = height;
 
     grid->physical_layer = (int **)malloc(width * sizeof(int *));
-    grid->optical_layer = (int **)malloc(width * sizeof(int *));
     for (int i = 0; i < width; i++)
     {
         grid->physical_layer[i] = (int *)malloc(height * sizeof(int));
-        grid->optical_layer[i] = (int *)malloc(height * sizeof(int));
     }
 
     return grid;
@@ -24,11 +22,42 @@ void destroy_grid(Grid *grid)
     for (int i = 0; i < grid->width; i++)
     {
         free(grid->physical_layer[i]);
-        free(grid->optical_layer[i]);
     }
     free(grid->physical_layer);
-    free(grid->optical_layer);
     free(grid);
+}
+
+void determine_grid_size(const char *filename, int *width, int *height)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        SDL_Log("Grid_state file hiba: %s", strerror(errno));
+        return;
+    }
+
+    *width = 0;
+    *height = 0;
+    char ch;
+    int current_width = 0;
+    while ((ch = fgetc(file)) != EOF)
+    {
+        if (ch == '\n')
+        {
+            (*height)++;
+            if (current_width > *width)
+            {
+                *width = current_width;
+            }
+            current_width = 0;
+        }
+        else if (ch != ' ')
+        {
+            current_width++;
+        }
+    }
+    *width /= 2; // Each tile is represented by 2 hex digits
+    fclose(file);
 }
 
 void read_grid_state(const char *filename, Grid *grid)
@@ -45,7 +74,6 @@ void read_grid_state(const char *filename, Grid *grid)
         for (int j = 0; j < grid->width; j++)
         {
             fscanf(file, "%2x", &grid->physical_layer[j][i]);
-            fscanf(file, "%2x", &grid->optical_layer[j][i]);
         }
     }
 
@@ -64,17 +92,10 @@ void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int t
             SDL_FRect dest = {offset_x + i * tile_size, offset_y + j * tile_size, (float)tile_size, (float)tile_size};
 
             int tile_type = grid->physical_layer[i][j];
-            int src_x = (tile_type % tilemap_width) * tile_size;
-            int src_y = (tile_type / tilemap_width) * tile_size;
+            int src_x = (tile_type % tilemap_width) * tilemap_width;
+            int src_y = (tile_type / tilemap_width) * tilemap_height;
 
-            SDL_FRect src = {src_x, src_y, tile_size, tile_size};
-            SDL_RenderTexture(renderer, tilemap, &src, &dest);
-
-            tile_type = grid->optical_layer[i][j];
-            src_x = (tile_type % tilemap_width) * tile_size;
-            src_y = (tile_type / tilemap_width) * tile_size;
-
-            src = (SDL_FRect){src_x, src_y, tile_size, tile_size};
+            SDL_FRect src = {src_x, src_y, (float)tilemap_width, (float)tilemap_height};
             SDL_RenderTexture(renderer, tilemap, &src, &dest);
         }
     }
@@ -106,17 +127,10 @@ void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *gri
             SDL_FRect dest = {offset_x + i * tile_size, offset_y + j * tile_size, (float)tile_size, (float)tile_size};
 
             int tile_type = grid->physical_layer[i][j];
-            int src_x = (tile_type % tilemap_width) * tile_size;
-            int src_y = (tile_type / tilemap_width) * tile_size;
+            int src_x = (tile_type % tilemap_width) * tilemap_width;
+            int src_y = (tile_type / tilemap_width) * tilemap_height;
 
-            SDL_FRect src = {src_x, src_y, tile_size, tile_size};
-            SDL_RenderTexture(renderer, tilemap, &src, &dest);
-
-            tile_type = grid->optical_layer[i][j];
-            src_x = (tile_type % tilemap_width) * tile_size;
-            src_y = (tile_type / tilemap_width) * tile_size;
-
-            src = (SDL_FRect){src_x, src_y, tile_size, tile_size};
+            SDL_FRect src = {src_x, src_y, (float)tilemap_width, (float)tilemap_height};
             SDL_RenderTexture(renderer, tilemap, &src, &dest);
         }
     }
@@ -166,4 +180,9 @@ void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
         highlight_rect.w += 2;
         highlight_rect.h += 2;
     }
+}
+
+void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type)
+{
+    grid->physical_layer[grid_x][grid_y] = tile_type;
 }

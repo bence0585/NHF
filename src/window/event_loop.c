@@ -32,31 +32,9 @@ void update_animation(AnimationController *anim_ctrl)
     }
 }
 
-void save_game_state(const char *filename, int character_x, int character_y)
+void game_tick(CropManager *crop_manager, int ticks)
 {
-    FILE *file = fopen(filename, "w");
-    if (file == NULL)
-    {
-        SDL_Log("Error opening save file: %s", strerror(errno));
-        return;
-    }
-    fprintf(file, "%d %d\n", character_x, character_y);
-    fclose(file);
-}
-
-void load_game_state(const char *filename, int *character_x, int *character_y)
-{
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
-        SDL_Log("Save file not found, creating a new one.");
-        *character_x = 0;
-        *character_y = 0;
-        save_game_state(filename, *character_x, *character_y);
-        return;
-    }
-    fscanf(file, "%d %d", character_x, character_y);
-    fclose(file);
+    update_crops(crop_manager, ticks);
 }
 
 /*
@@ -81,9 +59,22 @@ void event_loop(SDL_Renderer *renderer)
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
 
     SDL_Texture *character_tileset = load_texture(renderer, "../src/img/playerTilemap.png");
+    SDL_Texture *item_tilemap = load_texture(renderer, "../src/img/itemTilemap.png");
+    SDL_Texture *crop_texture = load_texture(renderer, "../src/img/cropTilemap.png"); // Crop texture
+    int selected_item = 0;
 
-    Grid *grid = create_grid(256, 256);
+    int grid_width, grid_height;
+    determine_grid_size("../src/grid_state.txt", &grid_width, &grid_height);
+    Grid *grid = create_grid(grid_width, grid_height);
     read_grid_state("../src/grid_state.txt", grid);
+    if (grid == NULL)
+    {
+        SDL_Log("Failed to read grid state.");
+        return;
+    }
+
+    CropManager crop_manager;
+    initialize_crop_manager(&crop_manager);
 
     AnimationController anim_ctrl = {0, 6, 10, 0, 1, DIRECTION_DOWN, false}; // Initialize frame_direction to 1
 
@@ -92,6 +83,12 @@ void event_loop(SDL_Renderer *renderer)
     int fps = 0;
 
     static const int movement_speed = 1;
+
+    int screen_width, screen_height;
+    SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
+
+    ToolType selected_tool = TOOL_HOE; // Default tool
+
     while (!quit)
     {
         Uint32 frame_start = SDL_GetTicks();
@@ -101,10 +98,33 @@ void event_loop(SDL_Renderer *renderer)
             fps = frame_count;
             frame_count = 0;
             start_time = frame_start;
+            game_tick(&crop_manager, 1); // Advance the game by one tick every second
         }
 
         SDL_PumpEvents();
         const bool *state = SDL_GetKeyboardState(NULL);
+
+        int grid_x, grid_y;
+        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
+
+        // Calculate the grid coordinates the player is looking at
+        int look_x = grid_x;
+        int look_y = grid_y;
+        switch (anim_ctrl.direction)
+        {
+        case DIRECTION_UP:
+            look_y -= 1;
+            break;
+        case DIRECTION_DOWN:
+            look_y += 1;
+            break;
+        case DIRECTION_LEFT:
+            look_x -= 1;
+            break;
+        case DIRECTION_RIGHT:
+            look_x += 1;
+            break;
+        }
 
         while (SDL_PollEvent(&event))
         {
@@ -119,6 +139,29 @@ void event_loop(SDL_Renderer *renderer)
                 {
                     SDL_Log("Kilepes: SDL3 ESC gomb");
                     quit = 1;
+                }
+                else if (event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
+                {
+                    selected_item = event.key.key - SDLK_1;
+                    if (selected_item >= INVENTORY_SIZE)
+                    {
+                        selected_item = INVENTORY_SIZE - 1;
+                    }
+                }
+                else if (event.key.key == SDLK_C)
+                {
+                    handle_tool_action(selected_tool, grid, look_x, look_y, &crop_manager);
+                }
+                break;
+
+            case SDL_EVENT_MOUSE_WHEEL:
+                if (event.wheel.y > 0) // Scroll up
+                {
+                    selected_item = (selected_item - 1 + INVENTORY_SIZE) % INVENTORY_SIZE;
+                }
+                else if (event.wheel.y < 0) // Scroll down
+                {
+                    selected_item = (selected_item + 1) % INVENTORY_SIZE;
                 }
                 break;
 
@@ -138,6 +181,18 @@ void event_loop(SDL_Renderer *renderer)
                     else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
                     {
                         save_game_state("../src/save_state.txt", character_x, character_y);
+                    }
+                    else
+                    {
+                        int slot;
+                        if (is_inventory_slot_clicked(x, y, screen_width, screen_height, &slot))
+                        {
+                            selected_item = slot;
+                        }
+                        else
+                        {
+                            handle_tool_action(selected_tool, grid, look_x, look_y, &crop_manager);
+                        }
                     }
                     // Add more button checks here
                 }
@@ -187,7 +242,6 @@ void event_loop(SDL_Renderer *renderer)
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        int screen_width, screen_height;
         SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
         int offset_x = screen_width / 2 - character_x * zoom_level - (tilemap_width * zoom_level) / 2;
         int offset_y = screen_height / 2 - character_y * zoom_level - (tilemap_height * zoom_level) / 2;
@@ -195,30 +249,7 @@ void event_loop(SDL_Renderer *renderer)
         render_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
         render_visible_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y, screen_width, screen_height);
 
-        int grid_x, grid_y;
-        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
-
         highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
-
-        // Calculate the grid coordinates the player is looking at
-        int look_x = grid_x;
-        int look_y = grid_y;
-        switch (anim_ctrl.direction)
-        {
-        case DIRECTION_UP:
-            look_y -= 1;
-            break;
-        case DIRECTION_DOWN:
-            look_y += 1;
-            break;
-        case DIRECTION_LEFT:
-            look_x -= 1;
-            break;
-        case DIRECTION_RIGHT:
-            look_x += 1;
-            break;
-        }
-
         highlight_look_square(renderer, look_x, look_y, tilemap_width, zoom_level, offset_x, offset_y);
 
         // Adjust the character's rendering position
@@ -240,7 +271,8 @@ void event_loop(SDL_Renderer *renderer)
         render_button(renderer, BUTTON_ZOOM_OUT);
         // render_button(renderer, BUTTON_SAVE_GAME); // Commented out
 
-        render_ui(renderer);
+        render_ui(renderer, item_tilemap, selected_item, screen_width, screen_height);
+        render_crops(renderer, crop_texture, &crop_manager, tilemap_width, zoom_level, offset_x, offset_y);
 
         SDL_Color white = {255, 255, 255, 255};
         char fps_text[10];
@@ -259,4 +291,6 @@ void event_loop(SDL_Renderer *renderer)
     destroy_grid(grid);
     SDL_DestroyTexture(character_tileset);
     SDL_DestroyTexture(tilemap);
+    SDL_DestroyTexture(item_tilemap);
+    SDL_DestroyTexture(crop_texture);
 }

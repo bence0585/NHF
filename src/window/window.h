@@ -4,6 +4,8 @@
 #include <SDL3/SDL.h>
 #include <stdbool.h>
 
+#define INVENTORY_SIZE 9
+
 typedef struct
 {
     int width;
@@ -62,7 +64,9 @@ SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 void event_loop(SDL_Renderer *renderer);
 
 // UI függvények
-void render_ui(SDL_Renderer *renderer);
+void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height);
+void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height);
+bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height, int *slot);
 
 void save_game_state(const char *filename, int character_x, int character_y);
 void load_game_state(const char *filename, int *character_x, int *character_y);
@@ -81,7 +85,48 @@ bool is_button_clicked(ButtonType button, int x, int y);
 // Animation
 void update_animation(AnimationController *anim_ctrl);
 
+typedef enum
+{
+    TOOL_HOE,
+    // Add more tools here
+} ToolType;
+
+typedef enum
+{
+    TILE_EMPTY,
+    TILE_HOE,
+    // Add more tile types here
+} TileType;
+
+typedef struct
+{
+    int x;
+    int y;
+    int growth_stage;
+    int growth_time;  // Time required to grow to the next stage
+    int current_time; // Current time spent growing
+} Crop;
+
+typedef struct
+{
+    Crop *crops;
+    int crop_count;
+} CropManager;
+
+void initialize_crop_manager(CropManager *crop_manager);
+void add_crop(CropManager *crop_manager, int x, int y, int growth_time);
+void update_crops(CropManager *crop_manager, int ticks);
+void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager *crop_manager, int tile_size, double zoom_level, int offset_x, int offset_y);
+
+// Tick system
+void game_tick(CropManager *crop_manager, int ticks);
+
+void handle_tool_action(ToolType tool, Grid *grid, int grid_x, int grid_y, CropManager *crop_manager);
+
 // Takarítás
 void cleanup(SDL_Renderer *renderer, SDL_Window *window);
+
+void determine_grid_size(const char *filename, int *width, int *height);
+void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
 
 #endif // WINDOW_H
