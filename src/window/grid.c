@@ -9,9 +9,15 @@ Grid *create_grid(int width, int height)
     grid->height = height;
 
     grid->physical_layer = (int **)malloc(width * sizeof(int *));
+    grid->collision_layer = (bool **)malloc(width * sizeof(bool *)); // Allocate memory for collision layer
     for (int i = 0; i < width; i++)
     {
         grid->physical_layer[i] = (int *)malloc(height * sizeof(int));
+        grid->collision_layer[i] = (bool *)malloc(height * sizeof(bool)); // Allocate memory for collision layer
+        for (int j = 0; j < height; j++)
+        {
+            grid->collision_layer[i][j] = false; // Initialize all cells as passable
+        }
     }
 
     return grid;
@@ -22,8 +28,10 @@ void destroy_grid(Grid *grid)
     for (int i = 0; i < grid->width; i++)
     {
         free(grid->physical_layer[i]);
+        free(grid->collision_layer[i]); // Free memory for collision layer
     }
     free(grid->physical_layer);
+    free(grid->collision_layer); // Free memory for collision layer
     free(grid);
 }
 
@@ -138,8 +146,8 @@ void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *gri
 
 void convert_to_grid_coordinates(int character_x, int character_y, int tile_size, int *grid_x, int *grid_y)
 {
-    *grid_x = character_x / tile_size;
-    *grid_y = character_y / tile_size;
+    *grid_x = (character_x / tile_size);
+    *grid_y = (character_y / tile_size);
 }
 
 void highlight_grid_square(SDL_Renderer *renderer, int grid_x, int grid_y, int tile_size, double zoom_level, int offset_x, int offset_y)
@@ -185,4 +193,125 @@ void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type)
 {
     grid->physical_layer[grid_x][grid_y] = tile_type;
+}
+
+ForegroundGrid *create_foreground_grid(int width, int height)
+{
+    ForegroundGrid *grid = (ForegroundGrid *)malloc(sizeof(ForegroundGrid));
+    grid->width = width;
+    grid->height = height;
+
+    grid->background_layer = (int **)malloc(width * sizeof(int *));
+    grid->foreground_layer = (int **)malloc(width * sizeof(int *));
+    for (int i = 0; i < width; i++)
+    {
+        grid->background_layer[i] = (int *)malloc(height * sizeof(int));
+        grid->foreground_layer[i] = (int *)malloc(height * sizeof(int));
+    }
+
+    return grid;
+}
+
+void destroy_foreground_grid(ForegroundGrid *grid)
+{
+    for (int i = 0; i < grid->width; i++)
+    {
+        free(grid->background_layer[i]);
+        free(grid->foreground_layer[i]);
+    }
+    free(grid->background_layer);
+    free(grid->foreground_layer);
+    free(grid);
+}
+
+void render_foreground_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, ForegroundGrid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y)
+{
+    SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
+    int tile_size = tilemap_width * zoom_level;
+
+    for (int i = 0; i < grid->width; i++)
+    {
+        for (int j = 0; j < grid->height; j++)
+        {
+            SDL_FRect dest = {offset_x + i * tile_size, offset_y + j * tile_size, (float)tile_size, (float)tile_size};
+
+            int tile_type = grid->foreground_layer[i][j];
+            int src_x = (tile_type % tilemap_width) * tilemap_width;
+            int src_y = (tile_type / tilemap_width) * tilemap_height;
+
+            SDL_FRect src = {src_x, src_y, (float)tilemap_width, (float)tilemap_height};
+            SDL_RenderTexture(renderer, tilemap, &src, &dest);
+        }
+    }
+}
+
+bool check_collision(ForegroundGrid *grid, int grid_x, int grid_y)
+{
+    if (grid_x < 0 || grid_x >= grid->width || grid_y < 0 || grid_y >= grid->height)
+    {
+        return true; // Out of bounds is considered a collision
+    }
+    return grid->foreground_layer[grid_x][grid_y] != 0; // Check collision based on tile type
+}
+
+void read_foreground_grid_state(const char *filename, ForegroundGrid *grid)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        SDL_Log("Foreground grid state file error: %s", strerror(errno));
+        return;
+    }
+
+    for (int i = 0; i < grid->height; i++)
+    {
+        for (int j = 0; j < grid->width; j++)
+        {
+            fscanf(file, "%2x", &grid->foreground_layer[j][i]);
+        }
+    }
+
+    fclose(file);
+}
+
+void read_collision_data(const char *filename, Grid *grid)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        SDL_Log("Collision data file error: %s", strerror(errno));
+        return;
+    }
+
+    for (int i = 0; i < grid->height; i++)
+    {
+        for (int j = 0; j < grid->width; j++)
+        {
+            int collision;
+            fscanf(file, "%2x", &collision);                   // Read a 2-digit hex number
+            grid->collision_layer[j][i] = (collision == 0xFF); // Set collision based on tile type
+        }
+    }
+
+    fclose(file);
+}
+
+void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int grid_y)
+{
+    grid->collision_layer[grid_x][grid_y] = !grid->collision_layer[grid_x][grid_y];
+
+    SDL_Log("Toggling collision at (%d, %d)", grid_x, grid_y); // Log the coordinates
+
+    FILE *file = fopen(filename, "r+");
+    if (file == NULL)
+    {
+        SDL_Log("Collision data file error: %s", strerror(errno));
+        return;
+    }
+
+    int line_length = grid->width * 3;                              // Each 2-digit hex number is followed by a space
+    fseek(file, grid_y * (line_length + 1) + grid_x * 3, SEEK_SET); // Adjust for newline characters
+    fprintf(file, "%02X", grid->collision_layer[grid_x][grid_y] ? 0xFF : 0x00);
+
+    fclose(file);
 }

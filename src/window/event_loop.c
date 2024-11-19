@@ -1,47 +1,30 @@
 #include <stdio.h>
+#include <math.h>
+#include <SDL3/SDL_render.h> // Include the correct header for SDL_RenderDrawPoint
 #include "window.h"
-void update_animation(AnimationController *anim_ctrl)
+
+void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
 {
-    anim_ctrl->frame_delay_counter++;
-    if (anim_ctrl->frame_delay_counter < anim_ctrl->frame_delay)
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 64); // Semi-transparent black
+
+    for (int w = 0; w < radius * 2; w++)
     {
-        return;
+        for (int h = 0; h < radius * 2; h++)
+        {
+            int dx = radius - w;
+            int dy = radius - h;
+            if ((dx * dx + dy * dy) <= (radius * radius))
+            {
+                SDL_RenderPoint(renderer, x + dx, y + dy);
+            }
+        }
     }
 
-    anim_ctrl->frame_delay_counter = 0;
-
-    if (anim_ctrl->is_walking)
-    {
-        anim_ctrl->frame = 6 + (anim_ctrl->frame + 1) % 6; // Walking frames 6-11
-        return;
-    }
-
-    // Idle animation: 0-1-2-3-4-5-4-3-2-1-0
-    if (anim_ctrl->frame < 5 && anim_ctrl->frame_direction == 1)
-    {
-        anim_ctrl->frame++;
-    }
-    else if (anim_ctrl->frame > 0 && anim_ctrl->frame_direction == -1)
-    {
-        anim_ctrl->frame--;
-    }
-    else
-    {
-        anim_ctrl->frame_direction *= -1;
-        anim_ctrl->frame += anim_ctrl->frame_direction;
-    }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
-void game_tick(CropManager *crop_manager, int ticks)
-{
-    update_crops(crop_manager, ticks);
-}
-
-/*
- * A fő eseménykezelő függvény
- * @param renderer: a kirajzolást végző renderer
- */
-void event_loop(SDL_Renderer *renderer)
+void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
 {
     SDL_Event event;
     int quit = 0;
@@ -57,16 +40,19 @@ void event_loop(SDL_Renderer *renderer)
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
-
     SDL_Texture *character_tileset = load_texture(renderer, "../src/img/playerTilemap.png");
+    SDL_SetTextureScaleMode(character_tileset, SDL_SCALEMODE_NEAREST);
     SDL_Texture *item_tilemap = load_texture(renderer, "../src/img/itemTilemap.png");
+    SDL_SetTextureScaleMode(item_tilemap, SDL_SCALEMODE_NEAREST);
     SDL_Texture *crop_texture = load_texture(renderer, "../src/img/cropTilemap.png"); // Crop texture
+    SDL_SetTextureScaleMode(crop_texture, SDL_SCALEMODE_NEAREST);
     int selected_item = 0;
 
     int grid_width, grid_height;
     determine_grid_size("../src/grid_state.txt", &grid_width, &grid_height);
     Grid *grid = create_grid(grid_width, grid_height);
     read_grid_state("../src/grid_state.txt", grid);
+    read_collision_data("../src/collisions.txt", grid); // Read collision data
     if (grid == NULL)
     {
         SDL_Log("Failed to read grid state.");
@@ -82,12 +68,12 @@ void event_loop(SDL_Renderer *renderer)
     int frame_count = 0;
     int fps = 0;
 
-    static const int movement_speed = 1;
+    static const int movement_speed = 2;
 
     int screen_width, screen_height;
     SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
 
-    ToolType selected_tool = TOOL_HOE; // Default tool
+    int grid_x, grid_y; // Declare grid_x and grid_y here
 
     while (!quit)
     {
@@ -104,7 +90,6 @@ void event_loop(SDL_Renderer *renderer)
         SDL_PumpEvents();
         const bool *state = SDL_GetKeyboardState(NULL);
 
-        int grid_x, grid_y;
         convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
 
         // Calculate the grid coordinates the player is looking at
@@ -150,7 +135,14 @@ void event_loop(SDL_Renderer *renderer)
                 }
                 else if (event.key.key == SDLK_C)
                 {
-                    handle_tool_action(selected_tool, grid, look_x, look_y, &crop_manager);
+                    if (selected_item < 3)
+                    {
+                        handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_x, look_y, &crop_manager);
+                    }
+                    else
+                    {
+                        handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_x, look_y, &crop_manager);
+                    }
                 }
                 break;
 
@@ -172,11 +164,13 @@ void event_loop(SDL_Renderer *renderer)
                     int y = event.button.y;
                     if (is_button_clicked(BUTTON_ZOOM_IN, x, y))
                     {
-                        zoom_level += 1;
+                        if (zoom_level < 4)
+                            zoom_level += 1;
                     }
                     else if (is_button_clicked(BUTTON_ZOOM_OUT, x, y))
                     {
-                        zoom_level -= 1;
+                        if (zoom_level > 1)
+                            zoom_level -= 1;
                     }
                     else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
                     {
@@ -191,7 +185,14 @@ void event_loop(SDL_Renderer *renderer)
                         }
                         else
                         {
-                            handle_tool_action(selected_tool, grid, look_x, look_y, &crop_manager);
+                            if (selected_item < 3)
+                            {
+                                handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_x, look_y, &crop_manager);
+                            }
+                            else
+                            {
+                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_x, look_y, &crop_manager);
+                            }
                         }
                     }
                     // Add more button checks here
@@ -199,43 +200,21 @@ void event_loop(SDL_Renderer *renderer)
             }
         }
 
-        anim_ctrl.is_walking = false;
-        if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP])
-        {
-            if (character_y > 0)
-            {
-                character_y -= movement_speed;
-                anim_ctrl.direction = DIRECTION_UP;
-                anim_ctrl.is_walking = true;
-            }
-        }
-        if (state[SDL_SCANCODE_S] || state[SDL_SCANCODE_DOWN])
-        {
-            if (character_y < (grid->height * tile_size - character_tile_height))
-            {
-                character_y += movement_speed;
-                anim_ctrl.direction = DIRECTION_DOWN;
-                anim_ctrl.is_walking = true;
-            }
-        }
-        if (state[SDL_SCANCODE_A] || state[SDL_SCANCODE_LEFT])
-        {
-            if (character_x > 0)
-            {
-                character_x -= movement_speed;
-                anim_ctrl.direction = DIRECTION_LEFT;
-                anim_ctrl.is_walking = true;
-            }
-        }
-        if (state[SDL_SCANCODE_D] || state[SDL_SCANCODE_RIGHT])
-        {
-            if (character_x < (grid->width * tile_size - character_tile_width))
-            {
-                character_x += movement_speed;
-                anim_ctrl.direction = DIRECTION_RIGHT;
-                anim_ctrl.is_walking = true;
-            }
-        }
+        handle_movement(state, &character_x, &character_y, &anim_ctrl, grid, movement_speed, tile_size, character_tile_width, character_tile_height);
+
+        // Ensure the character cannot exit the grid
+        if (character_x < 0)
+            character_x = 0;
+        if (character_y < 0)
+            character_y = 0;
+        if (character_x > (grid_width * tile_size - character_tile_width))
+            character_x = grid_width * tile_size - character_tile_width;
+        if (character_y > (grid_height * tile_size - character_tile_height))
+            character_y = grid_height * tile_size - character_tile_height;
+
+        // Log the new tile position
+        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
+        SDL_Log("Player is on tile (%d, %d)", grid_x, grid_y);
 
         update_animation(&anim_ctrl);
 
@@ -246,11 +225,18 @@ void event_loop(SDL_Renderer *renderer)
         int offset_x = screen_width / 2 - character_x * zoom_level - (tilemap_width * zoom_level) / 2;
         int offset_y = screen_height / 2 - character_y * zoom_level - (tilemap_height * zoom_level) / 2;
 
-        render_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
-        render_visible_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y, screen_width, screen_height);
+        render_grid(renderer, tilemap, background_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
+
+        render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
         highlight_look_square(renderer, look_x, look_y, tilemap_width, zoom_level, offset_x, offset_y);
+
+        // Render the shadow under the character
+        int shadow_radius = (character_tile_width / 3) * zoom_level;
+        int shadow_x = (screen_width / 2 - (character_tile_width * zoom_level) / 2);
+        int shadow_y = screen_height / 2 + (character_tile_height / 2) * zoom_level - (9 * zoom_level);
+        render_shadow(renderer, shadow_x, shadow_y, shadow_radius);
 
         // Adjust the character's rendering position
         SDL_FRect character_rect = {
@@ -277,7 +263,7 @@ void event_loop(SDL_Renderer *renderer)
         SDL_Color white = {255, 255, 255, 255};
         char fps_text[10];
         snprintf(fps_text, sizeof(fps_text), "FPS: %d", fps);
-        render_text(renderer, fps_text, white, 10, 10, 100, 30);
+        render_text(renderer, fps_text, white, screen_width - 110, 10, 100, 30); // Move FPS text to top right
 
         SDL_RenderPresent(renderer);
 

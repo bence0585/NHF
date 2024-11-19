@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #define INVENTORY_SIZE 9
+#define TILE_SIZE 16
 
 typedef struct
 {
@@ -12,7 +13,16 @@ typedef struct
     int height;
     int **physical_layer;
     int **optical_layer;
+    bool **collision_layer; // Add collision layer
 } Grid;
+
+typedef struct
+{
+    int width;
+    int height;
+    int **background_layer;
+    int **foreground_layer;
+} ForegroundGrid;
 
 // Animation types
 typedef enum
@@ -50,6 +60,8 @@ void cleanup_font();
 Grid *create_grid(int width, int height);
 void destroy_grid(Grid *grid);
 void read_grid_state(const char *filename, Grid *grid);
+void read_collision_data(const char *filename, Grid *grid);                           // Add this declaration
+void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int grid_y); // Add this declaration
 void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
 void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height);
 // Korrdinátaváltó függvény
@@ -61,7 +73,7 @@ void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
 SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 
 // Event loop
-void event_loop(SDL_Renderer *renderer);
+void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid);
 
 // UI függvények
 void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height);
@@ -88,6 +100,8 @@ void update_animation(AnimationController *anim_ctrl);
 typedef enum
 {
     TOOL_HOE,
+    TOOL_WATERING_CAN,
+    TOOL_SICKLE,
     // Add more tools here
 } ToolType;
 
@@ -95,8 +109,21 @@ typedef enum
 {
     TILE_EMPTY,
     TILE_HOE,
+    TILE_SLOPE_LEFT,  // Add this
+    TILE_SLOPE_RIGHT, // Add this
     // Add more tile types here
 } TileType;
+
+typedef enum
+{
+    CROP_SEED_1,
+    CROP_SEED_2,
+    CROP_SEED_3,
+    CROP_PRODUCT_1,
+    CROP_PRODUCT_2,
+    CROP_PRODUCT_3,
+    // Add more crop types here
+} CropType;
 
 typedef struct
 {
@@ -121,12 +148,21 @@ void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager
 // Tick system
 void game_tick(CropManager *crop_manager, int ticks);
 
-void handle_tool_action(ToolType tool, Grid *grid, int grid_x, int grid_y, CropManager *crop_manager);
+void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager);
+void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager);
 
 // Takarítás
 void cleanup(SDL_Renderer *renderer, SDL_Window *window);
 
 void determine_grid_size(const char *filename, int *width, int *height);
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
+
+ForegroundGrid *create_foreground_grid(int width, int height);
+void destroy_foreground_grid(ForegroundGrid *grid);
+void render_foreground_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, ForegroundGrid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
+void read_foreground_grid_state(const char *filename, ForegroundGrid *grid); // Add this declaration
+
+// Movement
+void handle_movement(const bool *state, int *character_x, int *character_y, AnimationController *anim_ctrl, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height);
 
 #endif // WINDOW_H
