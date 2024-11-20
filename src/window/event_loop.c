@@ -33,7 +33,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     const int tilemap_height = tilemap_width;
     const int character_tile_width = tilemap_width;
     const int character_tile_height = tilemap_width * 2;
-    int tile_size = tilemap_width * 2;
+    int tile_size = tilemap_width;
     int character_x = 0, character_y = 0; // Start at top-left tile
 
     load_game_state("../src/save_state.txt", &character_x, &character_y);
@@ -93,23 +93,26 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
 
         // Calculate the grid coordinates the player is looking at
-        int look_x = grid_x;
-        int look_y = grid_y;
+        int look_x = character_x - character_tile_width / 2;
+        int look_y = character_y - character_tile_height / 2;
         switch (anim_ctrl.direction)
         {
         case DIRECTION_UP:
-            look_y -= 1;
+            look_y -= tile_size;
             break;
         case DIRECTION_DOWN:
-            look_y += 1;
+            look_y += tile_size;
             break;
         case DIRECTION_LEFT:
-            look_x -= 1;
+            look_x -= tile_size;
             break;
         case DIRECTION_RIGHT:
-            look_x += 1;
+            look_x += tile_size;
             break;
         }
+
+        int look_grid_x, look_grid_y;
+        convert_to_grid_coordinates(look_x, look_y + character_tile_height / 2, tile_size, &look_grid_x, &look_grid_y);
 
         while (SDL_PollEvent(&event))
         {
@@ -137,11 +140,11 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 {
                     if (selected_item < 3)
                     {
-                        handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_x, look_y, &crop_manager);
+                        handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
                     }
                     else
                     {
-                        handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_x, look_y, &crop_manager);
+                        handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
                     }
                 }
                 break;
@@ -187,11 +190,11 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         {
                             if (selected_item < 3)
                             {
-                                handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_x, look_y, &crop_manager);
+                                handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
                             }
                             else
                             {
-                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_x, look_y, &crop_manager);
+                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
                             }
                         }
                     }
@@ -213,7 +216,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             character_y = grid_height * tile_size - character_tile_height;
 
         // Log the new tile position
-        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
+        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tile_size, &grid_x, &grid_y);
         SDL_Log("Player is on tile (%d, %d)", grid_x, grid_y);
 
         update_animation(&anim_ctrl);
@@ -230,7 +233,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
-        highlight_look_square(renderer, look_x, look_y, tilemap_width, zoom_level, offset_x, offset_y);
+        convert_to_grid_coordinates(look_x + character_tile_width / 2, look_y + character_tile_height, tile_size, &look_grid_x, &look_grid_y);
+        highlight_look_square(renderer, look_grid_x, look_grid_y, tilemap_width, zoom_level, offset_x, offset_y);
 
         // Render the shadow under the character
         int shadow_radius = (character_tile_width / 3) * zoom_level;

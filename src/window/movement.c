@@ -42,8 +42,8 @@ void handle_movement(const bool *state, int *character_x, int *character_y, Anim
         new_y = grid->height * tile_size - character_tile_height;
 
     // Check for collisions
-    int grid_x = (new_x + character_tile_width / 2) / tile_size;
-    int grid_y = (new_y + character_tile_height) / tile_size; // Use character's bottom center for collision detection
+    int grid_x, grid_y;
+    convert_to_grid_coordinates(new_x + character_tile_width / 2, new_y + character_tile_height / 2, tile_size, &grid_x, &grid_y);
     if (grid_x >= 0 && grid_x < grid->width && grid_y >= 0 && grid_y < grid->height)
     {
         if (!grid->collision_layer[grid_x][grid_y])
