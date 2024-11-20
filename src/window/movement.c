@@ -1,34 +1,34 @@
 #include "window.h"
 
-void handle_movement(const bool *state, int *character_x, int *character_y, AnimationController *anim_ctrl, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height)
+void handle_character_movement(const bool *state, Character *character, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height)
 {
-    anim_ctrl->is_walking = false;
-    int new_x = *character_x;
-    int new_y = *character_y;
+    character->anim_ctrl.is_walking = false;
+    int new_x = character->x;
+    int new_y = character->y;
 
     if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP])
     {
         new_y -= movement_speed;
-        anim_ctrl->direction = DIRECTION_UP;
-        anim_ctrl->is_walking = true;
+        character->anim_ctrl.direction = DIRECTION_UP;
+        character->anim_ctrl.is_walking = true;
     }
     if (state[SDL_SCANCODE_S] || state[SDL_SCANCODE_DOWN])
     {
         new_y += movement_speed;
-        anim_ctrl->direction = DIRECTION_DOWN;
-        anim_ctrl->is_walking = true;
+        character->anim_ctrl.direction = DIRECTION_DOWN;
+        character->anim_ctrl.is_walking = true;
     }
     if (state[SDL_SCANCODE_A] || state[SDL_SCANCODE_LEFT])
     {
         new_x -= movement_speed;
-        anim_ctrl->direction = DIRECTION_LEFT;
-        anim_ctrl->is_walking = true;
+        character->anim_ctrl.direction = DIRECTION_LEFT;
+        character->anim_ctrl.is_walking = true;
     }
     if (state[SDL_SCANCODE_D] || state[SDL_SCANCODE_RIGHT])
     {
         new_x += movement_speed;
-        anim_ctrl->direction = DIRECTION_RIGHT;
-        anim_ctrl->is_walking = true;
+        character->anim_ctrl.direction = DIRECTION_RIGHT;
+        character->anim_ctrl.is_walking = true;
     }
 
     // Ensure the character cannot exit the grid
@@ -48,9 +48,9 @@ void handle_movement(const bool *state, int *character_x, int *character_y, Anim
     {
         if (!grid->collision_layer[grid_x][grid_y])
         {
-            *character_x = new_x;
-            *character_y = new_y;
-            SDL_Log("Player moved to tile (%d, %d)", grid_x, grid_y);
+            character->x = new_x;
+            character->y = new_y;
+            // SDL_Log("Player moved to tile (%d, %d)", grid_x, grid_y);
         }
         else
         {

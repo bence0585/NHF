@@ -34,9 +34,12 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     const int character_tile_width = tilemap_width;
     const int character_tile_height = tilemap_width * 2;
     int tile_size = tilemap_width;
-    int character_x = 0, character_y = 0; // Start at top-left tile
 
-    load_game_state("../src/save_state.txt", &character_x, &character_y);
+    Character character;
+    initialize_character(&character, 0, 0); // Initialize character at top-left tile
+
+    load_game_state("../src/save_state.txt", &character.x, &character.y);
+    update_character_tile(&character, tilemap_width);
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
@@ -61,8 +64,6 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
     CropManager crop_manager;
     initialize_crop_manager(&crop_manager);
-
-    AnimationController anim_ctrl = {0, 6, 10, 0, 1, DIRECTION_DOWN, false}; // Initialize frame_direction to 1
 
     Uint32 start_time = SDL_GetTicks();
     int frame_count = 0;
@@ -90,12 +91,14 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         SDL_PumpEvents();
         const bool *state = SDL_GetKeyboardState(NULL);
 
-        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
+        update_character_tile(&character, tilemap_width);
+
+        convert_to_grid_coordinates(character.x + character_tile_width / 2, character.y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
 
         // Calculate the grid coordinates the player is looking at
-        int look_x = character_x - character_tile_width / 2;
-        int look_y = character_y - character_tile_height / 2;
-        switch (anim_ctrl.direction)
+        int look_x = character.x - character_tile_width / 2;
+        int look_y = character.y - character_tile_height / 2;
+        switch (character.anim_ctrl.direction)
         {
         case DIRECTION_UP:
             look_y -= tile_size;
@@ -112,7 +115,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         }
 
         int look_grid_x, look_grid_y;
-        convert_to_grid_coordinates(look_x, look_y + character_tile_height / 2, tile_size, &look_grid_x, &look_grid_y);
+        convert_to_grid_coordinates(look_x + character_tile_width / 2, look_y + character_tile_height / 2, tile_size, &look_grid_x, &look_grid_y);
 
         while (SDL_PollEvent(&event))
         {
@@ -147,6 +150,11 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
                     }
                 }
+                else if (event.key.key == SDLK_L)
+                {
+                    toggle_collision_data("../src/collisions.txt", grid, look_grid_x, look_grid_y);
+                    read_collision_data("../src/collisions.txt", grid); // Read collision data again
+                }
                 break;
 
             case SDL_EVENT_MOUSE_WHEEL:
@@ -177,7 +185,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     }
                     else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
                     {
-                        save_game_state("../src/save_state.txt", character_x, character_y);
+                        save_game_state("../src/save_state.txt", character.x, character.y);
                     }
                     else
                     {
@@ -203,36 +211,36 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             }
         }
 
-        handle_movement(state, &character_x, &character_y, &anim_ctrl, grid, movement_speed, tile_size, character_tile_width, character_tile_height);
+        handle_character_movement(state, &character, grid, movement_speed, tile_size, character_tile_width, character_tile_height);
 
         // Ensure the character cannot exit the grid
-        if (character_x < 0)
-            character_x = 0;
-        if (character_y < 0)
-            character_y = 0;
-        if (character_x > (grid_width * tile_size - character_tile_width))
-            character_x = grid_width * tile_size - character_tile_width;
-        if (character_y > (grid_height * tile_size - character_tile_height))
-            character_y = grid_height * tile_size - character_tile_height;
+        if (character.x < 0)
+            character.x = 0;
+        if (character.y < 0)
+            character.y = 0;
+        if (character.x > (grid_width * tile_size - character_tile_width))
+            character.x = grid_width * tile_size - character_tile_width;
+        if (character.y > (grid_height * tile_size - character_tile_height))
+            character.y = grid_height * tile_size - character_tile_height;
 
         // Log the new tile position
-        convert_to_grid_coordinates(character_x, character_y + character_tile_height / 2, tile_size, &grid_x, &grid_y);
-        SDL_Log("Player is on tile (%d, %d)", grid_x, grid_y);
+        update_character_tile(&character, tile_size);
+        // SDL_Log("Player is on tile (%d, %d)", character.tile_x, character.tile_y);
 
-        update_animation(&anim_ctrl);
+        update_animation(&character.anim_ctrl);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
         SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
-        int offset_x = screen_width / 2 - character_x * zoom_level - (tilemap_width * zoom_level) / 2;
-        int offset_y = screen_height / 2 - character_y * zoom_level - (tilemap_height * zoom_level) / 2;
+        int offset_x = screen_width / 2 - character.x * zoom_level - (tilemap_width * zoom_level) / 2;
+        int offset_y = screen_height / 2 - character.y * zoom_level - (tilemap_height * zoom_level) / 2;
 
         render_grid(renderer, tilemap, background_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
-        highlight_grid_square(renderer, grid_x, grid_y, tilemap_width, zoom_level, offset_x, offset_y);
+        highlight_grid_square(renderer, character.tile_x, character.tile_y, tilemap_width, zoom_level, offset_x, offset_y);
         convert_to_grid_coordinates(look_x + character_tile_width / 2, look_y + character_tile_height, tile_size, &look_grid_x, &look_grid_y);
         highlight_look_square(renderer, look_grid_x, look_grid_y, tilemap_width, zoom_level, offset_x, offset_y);
 
@@ -250,8 +258,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             (float)(character_tile_height * zoom_level)};
 
         // Calculate the source rectangle for the character animation
-        int src_x = anim_ctrl.frame * character_tile_width;
-        int src_y = anim_ctrl.direction * character_tile_height;
+        int src_x = character.anim_ctrl.frame * character_tile_width;
+        int src_y = character.anim_ctrl.direction * character_tile_height;
         SDL_FRect character_src_rect = {src_x, src_y, character_tile_width, character_tile_height};
 
         // Render the character from the tileset

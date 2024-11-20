@@ -7,6 +7,14 @@
 #define INVENTORY_SIZE 9
 #define TILE_SIZE 16
 
+typedef enum
+{
+    TOOL_HOE,
+    TOOL_WATERING_CAN,
+    TOOL_SICKLE,
+    // Add more tools here
+} ToolType;
+
 typedef struct
 {
     int width;
@@ -43,6 +51,16 @@ typedef struct
     Direction direction;
     bool is_walking;
 } AnimationController;
+
+typedef struct
+{
+    int x;
+    int y;
+    int tile_x;
+    int tile_y;
+    ToolType equipped_tool;
+    AnimationController anim_ctrl;
+} Character;
 
 // Inicializálás
 
@@ -96,14 +114,6 @@ bool is_button_clicked(ButtonType button, int x, int y);
 
 // Animation
 void update_animation(AnimationController *anim_ctrl);
-
-typedef enum
-{
-    TOOL_HOE,
-    TOOL_WATERING_CAN,
-    TOOL_SICKLE,
-    // Add more tools here
-} ToolType;
 
 typedef enum
 {
@@ -164,5 +174,9 @@ void read_foreground_grid_state(const char *filename, ForegroundGrid *grid); // 
 
 // Movement
 void handle_movement(const bool *state, int *character_x, int *character_y, AnimationController *anim_ctrl, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height);
+
+void initialize_character(Character *character, int start_x, int start_y);
+void update_character_tile(Character *character, int tile_size);
+void handle_character_movement(const bool *state, Character *character, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height);
 
 #endif // WINDOW_H
