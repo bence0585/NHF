@@ -9,10 +9,12 @@ Grid *create_grid(int width, int height)
     grid->height = height;
 
     grid->physical_layer = (int **)malloc(width * sizeof(int *));
+    grid->optical_layer = (int **)malloc(width * sizeof(int *));     // Allocate memory for optical layer
     grid->collision_layer = (bool **)malloc(width * sizeof(bool *)); // Allocate memory for collision layer
     for (int i = 0; i < width; i++)
     {
         grid->physical_layer[i] = (int *)malloc(height * sizeof(int));
+        grid->optical_layer[i] = (int *)malloc(height * sizeof(int));     // Allocate memory for optical layer
         grid->collision_layer[i] = (bool *)malloc(height * sizeof(bool)); // Allocate memory for collision layer
         for (int j = 0; j < height; j++)
         {
@@ -28,9 +30,11 @@ void destroy_grid(Grid *grid)
     for (int i = 0; i < grid->width; i++)
     {
         free(grid->physical_layer[i]);
+        free(grid->optical_layer[i]);   // Free memory for optical layer
         free(grid->collision_layer[i]); // Free memory for collision layer
     }
     free(grid->physical_layer);
+    free(grid->optical_layer);   // Free memory for optical layer
     free(grid->collision_layer); // Free memory for collision layer
     free(grid);
 }
@@ -86,6 +90,7 @@ void read_grid_state(const char *filename, Grid *grid)
     }
 
     fclose(file);
+    SDL_Log("Re-read grid state from %s", filename); // Log the re-read action
 }
 
 void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y)
@@ -206,13 +211,12 @@ void update_tile_texture(Grid *grid, int grid_x, int grid_y)
     // Update the texture based on the neighbors
     TileType current_tile = get_tile_type(grid, grid_x, grid_y);
 
-    // Example logic to update the texture based on neighbors
-    // This can be expanded based on the specific requirements for texture updates
+    // Set the texture to 0xEC for hoed tiles in the background layer and update the optical layer to 0x00
     if (current_tile == TILE_HOE)
     {
-        // Check neighbors and update texture accordingly
-        // For simplicity, let's assume we just log the update for now
-        SDL_Log("Updating texture for hoed tile at (%d, %d)", grid_x, grid_y);
+        grid->physical_layer[grid_x][grid_y] = 0xEC; // Set the texture to 0xEC
+        grid->optical_layer[grid_x][grid_y] = 0x00;  // Set the optical layer to 0x00
+        SDL_Log("Set background texture to 0xEC and optical layer to 0x00 for hoed tile at (%d, %d)", grid_x, grid_y);
     }
 }
 

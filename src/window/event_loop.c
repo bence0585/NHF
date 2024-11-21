@@ -125,7 +125,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 }
                 else if (event.key.key == SDLK_C)
                 {
-                    handle_tool_action(character.equipped_tool, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
+                    handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                 }
                 else if (event.key.key == SDLK_L)
                 {
@@ -167,6 +167,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
                     {
                         save_game_state("../src/save_state.txt", character.x, character.y);
+                        save_grid_state("../src/grid_state.txt", grid); // Save changes to the grid state file
                     }
                     else
                     {
@@ -180,18 +181,18 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                             if (selected_item < 3) // Update equipped tool based on selected item
                             {
                                 character.equipped_tool = (ToolType)selected_item;
-                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
+                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                             }
                             else
                             {
-                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
+                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                             }
                         }
                     }
                     if (selected_item < 3) // Update equipped tool based on selected item
                     {
                         character.equipped_tool = (ToolType)selected_item;
-                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
+                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                     }
                     // Add more button checks here
                 }
@@ -225,7 +226,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         int offset_x = screen_width / 2 - character.x * zoom_level - (tilemap_width * zoom_level) / 2;
         int offset_y = screen_height / 2 - character.y * zoom_level - (tilemap_height * zoom_level) / 2;
 
-        render_grid(renderer, tilemap, background_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
+        render_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 

@@ -2,21 +2,23 @@
 
 void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager)
 {
+    // Use the targeted tile coordinates instead of the character's feet
+    int target_x = grid_x;
+    int target_y = grid_y;
+
     switch (tool)
     {
     case TOOL_HOE:
-        SDL_Log("Hoeing tile at (%d, %d)", grid_x, grid_y); // Log the hoeing action
-        set_tile_type(grid, grid_x, grid_y, TILE_HOE);
-        update_tile_texture(grid, grid_x, grid_y);
-        save_grid_state("../src/grid_state.txt", grid); // Save changes to the grid state file
-        on_tile_change(grid, grid_x, grid_y, TILE_HOE); // Call on_tile_change
+        SDL_Log("Hoeing tile at (%d, %d)", target_x, target_y); // Log the hoeing action
+        set_tile_type(grid, target_x, target_y, TILE_HOE);
+        update_tile_texture(grid, target_x, target_y);
+        on_tile_change(grid, target_x, target_y, TILE_HOE); // Call on_tile_change
         break;
     case TOOL_WATERING_CAN:
-        SDL_Log("Watering tile at (%d, %d)", grid_x, grid_y); // Log the watering action
-        set_tile_type(grid, grid_x, grid_y, TILE_WATERED);
-        update_tile_texture(grid, grid_x, grid_y);
-        save_grid_state("../src/grid_state.txt", grid);     // Save changes to the grid state file
-        on_tile_change(grid, grid_x, grid_y, TILE_WATERED); // Call on_tile_change
+        SDL_Log("Watering tile at (%d, %d)", target_x, target_y); // Log the watering action
+        set_tile_type(grid, target_x, target_y, TILE_WATERED);
+        update_tile_texture(grid, target_x, target_y);
+        on_tile_change(grid, target_x, target_y, TILE_WATERED); // Call on_tile_change
         break;
     case TOOL_SICKLE:
         // Implement cutting action
