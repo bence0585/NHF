@@ -84,6 +84,8 @@ void destroy_grid(Grid *grid);
 void read_grid_state(const char *filename, Grid *grid);
 void read_collision_data(const char *filename, Grid *grid);                           // Add this declaration
 void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int grid_y); // Add this declaration
+void save_grid_state(const char *filename, Grid *grid);
+void save_foreground_grid_state(const char *filename, ForegroundGrid *grid);
 void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
 void render_visible_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y, int screen_width, int screen_height);
 // Korrdinátaváltó függvény
@@ -123,10 +125,20 @@ typedef enum
 {
     TILE_EMPTY,
     TILE_HOE,
-    TILE_SLOPE_LEFT,  // Add this
-    TILE_SLOPE_RIGHT, // Add this
+    TILE_WATERED,
     // Add more tile types here
 } TileType;
+
+typedef enum
+{
+    TOOL_ACTION_HOE,
+    TOOL_ACTION_WATER,
+    // Add more tool actions here
+} ToolAction;
+
+void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
+void update_tile_texture(Grid *grid, int grid_x, int grid_y);
+void on_tile_change(Grid *grid, int grid_x, int grid_y, TileType tile_type);
 
 typedef enum
 {
@@ -170,6 +182,7 @@ void cleanup(SDL_Renderer *renderer, SDL_Window *window);
 
 void determine_grid_size(const char *filename, int *width, int *height);
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
+void update_tile_texture(Grid *grid, int grid_x, int grid_y);
 
 ForegroundGrid *create_foreground_grid(int width, int height);
 void destroy_foreground_grid(ForegroundGrid *grid);

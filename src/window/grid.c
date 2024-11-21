@@ -193,6 +193,34 @@ void highlight_look_square(SDL_Renderer *renderer, int grid_x, int grid_y, int t
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type)
 {
     grid->physical_layer[grid_x][grid_y] = tile_type;
+    SDL_Log("Set tile type at (%d, %d) to %d", grid_x, grid_y, tile_type); // Log the tile type change
+}
+
+TileType get_tile_type(Grid *grid, int grid_x, int grid_y)
+{
+    return grid->physical_layer[grid_x][grid_y];
+}
+
+void update_tile_texture(Grid *grid, int grid_x, int grid_y)
+{
+    // Update the texture based on the neighbors
+    TileType current_tile = get_tile_type(grid, grid_x, grid_y);
+
+    // Example logic to update the texture based on neighbors
+    // This can be expanded based on the specific requirements for texture updates
+    if (current_tile == TILE_HOE)
+    {
+        // Check neighbors and update texture accordingly
+        // For simplicity, let's assume we just log the update for now
+        SDL_Log("Updating texture for hoed tile at (%d, %d)", grid_x, grid_y);
+    }
+}
+
+void on_tile_change(Grid *grid, int grid_x, int grid_y, TileType tile_type)
+{
+    // Handle changes in the grid system
+    // For example, update neighbors or trigger other events
+    // ...implement the logic here...
 }
 
 ForegroundGrid *create_foreground_grid(int width, int height)
@@ -312,6 +340,49 @@ void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int gri
     int line_length = grid->width * 3;                              // Each 2-digit hex number is followed by a space
     fseek(file, grid_y * (line_length + 1) + grid_x * 3, SEEK_SET); // Adjust for newline characters
     fprintf(file, "%02X", grid->collision_layer[grid_x][grid_y] ? 0xFF : 0x00);
+
+    fclose(file);
+}
+
+void save_grid_state(const char *filename, Grid *grid)
+{
+    FILE *file = fopen(filename, "w");
+    if (file == NULL)
+    {
+        SDL_Log("Failed to open grid state file for writing: %s", strerror(errno));
+        return;
+    }
+
+    for (int i = 0; i < grid->height; i++)
+    {
+        for (int j = 0; j < grid->width; j++)
+        {
+            fprintf(file, "%02x ", grid->physical_layer[j][i]);
+        }
+        fprintf(file, "\n");
+    }
+
+    fclose(file);
+    SDL_Log("Saved grid state to %s", filename); // Log the save action
+}
+
+void save_foreground_grid_state(const char *filename, ForegroundGrid *grid)
+{
+    FILE *file = fopen(filename, "w");
+    if (file == NULL)
+    {
+        SDL_Log("Failed to open foreground grid state file for writing: %s", strerror(errno));
+        return;
+    }
+
+    for (int i = 0; i < grid->height; i++)
+    {
+        for (int j = 0; j < grid->width; j++)
+        {
+            fprintf(file, "%02x ", grid->foreground_layer[j][i]);
+        }
+        fprintf(file, "\n");
+    }
 
     fclose(file);
 }

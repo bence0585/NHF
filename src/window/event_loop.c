@@ -118,17 +118,14 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     {
                         selected_item = INVENTORY_SIZE - 1;
                     }
+                    if (selected_item < 3) // Update equipped tool based on selected item
+                    {
+                        character.equipped_tool = (ToolType)selected_item;
+                    }
                 }
                 else if (event.key.key == SDLK_C)
                 {
-                    if (selected_item < 3)
-                    {
-                        handle_tool_action((ToolType)selected_item, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
-                    }
-                    else
-                    {
-                        handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
-                    }
+                    handle_tool_action(character.equipped_tool, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                 }
                 else if (event.key.key == SDLK_L)
                 {
@@ -180,15 +177,21 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         }
                         else
                         {
-                            if (selected_item < 3)
+                            if (selected_item < 3) // Update equipped tool based on selected item
                             {
-                                handle_tool_action((ToolType)selected_item, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
+                                character.equipped_tool = (ToolType)selected_item;
+                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                             }
                             else
                             {
                                 handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                             }
                         }
+                    }
+                    if (selected_item < 3) // Update equipped tool based on selected item
+                    {
+                        character.equipped_tool = (ToolType)selected_item;
+                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                     }
                     // Add more button checks here
                 }
@@ -275,11 +278,14 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                      "Look Tile X: %d "
                      "Look Tile Y: %d "
                      "Direction: %d "
-                     "Is Walking: %d",
+                     "Is Walking: %d "
+                     "Equipped Tool: %d "
+                     "Selected Item: %d",
                      character.x, character.y, character.tile_x, character.tile_y,
                      character.look_x, character.look_y, character.look_tile_x, character.look_tile_y,
-                     character.anim_ctrl.direction, character.anim_ctrl.is_walking);
-            render_text(renderer, debug_text, white, screen_width - 810, 50, 800, 30); // Render debug info below FPS
+                     character.anim_ctrl.direction, character.anim_ctrl.is_walking,
+                     character.equipped_tool, selected_item);
+            render_text(renderer, debug_text, white, screen_width - 1110, 50, 1100, 80); // Render debug info below FPS
         }
 
         SDL_RenderPresent(renderer);
