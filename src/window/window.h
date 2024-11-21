@@ -58,6 +58,10 @@ typedef struct
     int y;
     int tile_x;
     int tile_y;
+    int look_x;
+    int look_y; // Add look_x and look_y fields
+    int look_tile_x;
+    int look_tile_y; // Add look_tile_x and look_tile_y fields
     ToolType equipped_tool;
     AnimationController anim_ctrl;
 } Character;
@@ -178,5 +182,7 @@ void handle_movement(const bool *state, int *character_x, int *character_y, Anim
 void initialize_character(Character *character, int start_x, int start_y);
 void update_character_tile(Character *character, int tile_size);
 void handle_character_movement(const bool *state, Character *character, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height);
+void calculate_look_coordinates(Character *character, int tile_size);
+void update_look_tile(Character *character, int tile_size);
 
 #endif // WINDOW_H

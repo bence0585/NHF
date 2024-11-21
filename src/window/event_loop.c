@@ -76,6 +76,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
     int grid_x, grid_y; // Declare grid_x and grid_y here
 
+    bool show_debug_info = false; // Add a flag to toggle debug info
+
     while (!quit)
     {
         Uint32 frame_start = SDL_GetTicks();
@@ -94,28 +96,6 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         update_character_tile(&character, tilemap_width);
 
         convert_to_grid_coordinates(character.x + character_tile_width / 2, character.y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
-
-        // Calculate the grid coordinates the player is looking at
-        int look_x = character.x - character_tile_width / 2;
-        int look_y = character.y - character_tile_height / 2;
-        switch (character.anim_ctrl.direction)
-        {
-        case DIRECTION_UP:
-            look_y -= tile_size;
-            break;
-        case DIRECTION_DOWN:
-            look_y += tile_size;
-            break;
-        case DIRECTION_LEFT:
-            look_x -= tile_size;
-            break;
-        case DIRECTION_RIGHT:
-            look_x += tile_size;
-            break;
-        }
-
-        int look_grid_x, look_grid_y;
-        convert_to_grid_coordinates(look_x + character_tile_width / 2, look_y + character_tile_height / 2, tile_size, &look_grid_x, &look_grid_y);
 
         while (SDL_PollEvent(&event))
         {
@@ -143,17 +123,21 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 {
                     if (selected_item < 3)
                     {
-                        handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
+                        handle_tool_action((ToolType)selected_item, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                     }
                     else
                     {
-                        handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
+                        handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                     }
                 }
                 else if (event.key.key == SDLK_L)
                 {
-                    toggle_collision_data("../src/collisions.txt", grid, look_grid_x, look_grid_y);
+                    toggle_collision_data("../src/collisions.txt", grid, character.tile_x, character.tile_y);
                     read_collision_data("../src/collisions.txt", grid); // Read collision data again
+                }
+                else if (event.key.key == SDLK_F2)
+                {
+                    show_debug_info = !show_debug_info; // Toggle debug info
                 }
                 break;
 
@@ -198,11 +182,11 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         {
                             if (selected_item < 3)
                             {
-                                handle_tool_action((ToolType)selected_item, grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
+                                handle_tool_action((ToolType)selected_item, grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                             }
                             else
                             {
-                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, look_grid_x, look_grid_y, &crop_manager);
+                                handle_crop_action((CropType)(selected_item - 3), grid, foreground_grid, character.tile_x, character.tile_y, &crop_manager);
                             }
                         }
                     }
@@ -212,6 +196,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         }
 
         handle_character_movement(state, &character, grid, movement_speed, tile_size, character_tile_width, character_tile_height);
+        calculate_look_coordinates(&character, tile_size); // Ensure look coordinates are updated
 
         // Ensure the character cannot exit the grid
         if (character.x < 0)
@@ -225,6 +210,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
         // Log the new tile position
         update_character_tile(&character, tile_size);
+        calculate_look_coordinates(&character, tile_size); // Ensure look coordinates are updated
         // SDL_Log("Player is on tile (%d, %d)", character.tile_x, character.tile_y);
 
         update_animation(&character.anim_ctrl);
@@ -241,8 +227,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
         highlight_grid_square(renderer, character.tile_x, character.tile_y, tilemap_width, zoom_level, offset_x, offset_y);
-        convert_to_grid_coordinates(look_x + character_tile_width / 2, look_y + character_tile_height, tile_size, &look_grid_x, &look_grid_y);
-        highlight_look_square(renderer, look_grid_x, look_grid_y, tilemap_width, zoom_level, offset_x, offset_y);
+        highlight_look_square(renderer, character.look_tile_x, character.look_tile_y, tilemap_width, zoom_level, offset_x, offset_y);
 
         // Render the shadow under the character
         int shadow_radius = (character_tile_width / 3) * zoom_level;
@@ -276,6 +261,26 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         char fps_text[10];
         snprintf(fps_text, sizeof(fps_text), "FPS: %d", fps);
         render_text(renderer, fps_text, white, screen_width - 110, 10, 100, 30); // Move FPS text to top right
+
+        if (show_debug_info) // Render debug info if flag is set
+        {
+            char debug_text[256];
+            snprintf(debug_text, sizeof(debug_text),
+                     "X: %d "
+                     "Y: %d "
+                     "Tile X: %d "
+                     "Tile Y: %d "
+                     "Look X: %d "
+                     "Look Y: %d "
+                     "Look Tile X: %d "
+                     "Look Tile Y: %d "
+                     "Direction: %d "
+                     "Is Walking: %d",
+                     character.x, character.y, character.tile_x, character.tile_y,
+                     character.look_x, character.look_y, character.look_tile_x, character.look_tile_y,
+                     character.anim_ctrl.direction, character.anim_ctrl.is_walking);
+            render_text(renderer, debug_text, white, screen_width - 810, 50, 800, 30); // Render debug info below FPS
+        }
 
         SDL_RenderPresent(renderer);
 
