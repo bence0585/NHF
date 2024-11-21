@@ -5,17 +5,35 @@
 Grid *create_grid(int width, int height)
 {
     Grid *grid = (Grid *)malloc(sizeof(Grid));
+    if (grid == NULL)
+    {
+        SDL_Log("Failed to allocate memory for grid.");
+        return NULL;
+    }
     grid->width = width;
     grid->height = height;
 
     grid->physical_layer = (int **)malloc(width * sizeof(int *));
     grid->optical_layer = (int **)malloc(width * sizeof(int *));     // Allocate memory for optical layer
     grid->collision_layer = (bool **)malloc(width * sizeof(bool *)); // Allocate memory for collision layer
+    if (grid->physical_layer == NULL || grid->optical_layer == NULL || grid->collision_layer == NULL)
+    {
+        SDL_Log("Failed to allocate memory for grid layers.");
+        free(grid);
+        return NULL;
+    }
+
     for (int i = 0; i < width; i++)
     {
         grid->physical_layer[i] = (int *)malloc(height * sizeof(int));
         grid->optical_layer[i] = (int *)malloc(height * sizeof(int));     // Allocate memory for optical layer
         grid->collision_layer[i] = (bool *)malloc(height * sizeof(bool)); // Allocate memory for collision layer
+        if (grid->physical_layer[i] == NULL || grid->optical_layer[i] == NULL || grid->collision_layer[i] == NULL)
+        {
+            SDL_Log("Failed to allocate memory for grid layer row %d.", i);
+            destroy_grid(grid);
+            return NULL;
+        }
         for (int j = 0; j < height; j++)
         {
             grid->collision_layer[i][j] = false; // Initialize all cells as passable
@@ -27,6 +45,9 @@ Grid *create_grid(int width, int height)
 
 void destroy_grid(Grid *grid)
 {
+    if (grid == NULL)
+        return;
+
     for (int i = 0; i < grid->width; i++)
     {
         free(grid->physical_layer[i]);
@@ -239,6 +260,12 @@ ForegroundGrid *create_foreground_grid(int width, int height)
     {
         grid->background_layer[i] = (int *)malloc(height * sizeof(int));
         grid->foreground_layer[i] = (int *)malloc(height * sizeof(int));
+        if (grid->background_layer[i] == NULL || grid->foreground_layer[i] == NULL)
+        {
+            SDL_Log("Failed to allocate memory for foreground grid layer row %d.", i);
+            destroy_foreground_grid(grid);
+            return NULL;
+        }
     }
 
     return grid;

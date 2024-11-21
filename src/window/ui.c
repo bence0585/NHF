@@ -1,15 +1,15 @@
 #include "window.h"
+#include <stdio.h> // Include the correct header for snprintf
 
 #define INVENTORY_SIZE 9
 #define ITEM_SIZE 64       // Increased item size for scaled resolution
 #define PADDING 4          // Padding between inventory tiles
 #define BORDER_THICKNESS 4 // Thicker border
 
-void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height)
+void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height, int inventory_y, int item_offset)
 {
     int inventory_width = INVENTORY_SIZE * (ITEM_SIZE + PADDING) - PADDING;
     int inventory_x = (screen_width - inventory_width) / 2;
-    int inventory_y = screen_height - ITEM_SIZE - 20; // 20 pixels from the bottom
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color for borders
 
@@ -27,7 +27,7 @@ void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int sel
         }
 
         // Render item from item_tilemap
-        SDL_FRect src_rect = {i * 16, 0, 16, 16}; // Source size is 16x16
+        SDL_FRect src_rect = {i * 16, item_offset, 16, 16}; // Source size is 16x16
         SDL_RenderTexture(renderer, item_tilemap, &src_rect, &item_rect);
     }
 }
@@ -46,7 +46,18 @@ void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_i
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);           // Blue color
     SDL_RenderFillRect(renderer, &save_game_button);
 
-    render_inventory(renderer, item_tilemap, selected_item, screen_width, screen_height);
+    int inventory_y = screen_height - ITEM_SIZE - 20; // 20 pixels from the bottom
+    render_inventory(renderer, item_tilemap, selected_item, screen_width, screen_height, inventory_y, 0);
+
+    // Render additional inventories for seed pouch and harvest bag
+    if (selected_item == 3) // Seed pouch
+    {
+        render_inventory(renderer, item_tilemap, -1, screen_width, screen_height, inventory_y - ITEM_SIZE - 20, 16); // Offset for seeds
+    }
+    else if (selected_item == 4) // Harvest bag
+    {
+        render_inventory(renderer, item_tilemap, -1, screen_width, screen_height, inventory_y - ITEM_SIZE - 20, 32); // Offset for harvested products
+    }
 }
 
 void render_button(SDL_Renderer *renderer, ButtonType button)
@@ -104,6 +115,21 @@ bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height
             }
         }
     }
+
+    // Check for additional inventories
+    if (y >= inventory_y - ITEM_SIZE - 20 && y <= inventory_y - 20)
+    {
+        for (int i = 0; i < INVENTORY_SIZE; i++)
+        {
+            int slot_x = inventory_x + i * (ITEM_SIZE + PADDING);
+            if (x >= slot_x && x <= slot_x + ITEM_SIZE)
+            {
+                *slot = i + INVENTORY_SIZE; // Offset for additional inventory
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 

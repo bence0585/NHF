@@ -100,7 +100,7 @@ SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid);
 
 // UI függvények
-void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height);
+void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height, int inventory_y, int item_offset);
 void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height);
 bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height, int *slot);
 
