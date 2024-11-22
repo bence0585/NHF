@@ -24,6 +24,11 @@ void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
+void game_tick(CropManager *crop_manager, int ticks)
+{
+    update_crops(crop_manager, ticks);
+}
+
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
 {
     SDL_Event event;
