@@ -66,6 +66,13 @@ typedef struct
     AnimationController anim_ctrl;
 } Character;
 
+typedef struct
+{
+    int selected_main_item;
+    int selected_aux_item;
+    int selected_aux_inventory; // 0 for none, 1 for seed pouch, 2 for harvest bag
+} InventorySelection;
+
 // Inicializálás
 
 int initialize_SDL();
@@ -100,8 +107,8 @@ SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file_path);
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid);
 
 // UI függvények
-void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height, int inventory_y, int item_offset);
-void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, int selected_item, int screen_width, int screen_height);
+void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelection *inventory_selection, int screen_width, int screen_height, int inventory_y, int item_offset);
+void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelection *inventory_selection, int screen_width, int screen_height);
 bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height, int *slot);
 
 void save_game_state(const char *filename, int character_x, int character_y);
@@ -197,5 +204,8 @@ void update_character_tile(Character *character, int tile_size);
 void handle_character_movement(const bool *state, Character *character, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height);
 void calculate_look_coordinates(Character *character, int tile_size);
 void update_look_tile(Character *character, int tile_size);
+
+void handle_seed_harvest_selection(int *selected_item, int inventory_size, int offset);
+void handle_aux_selection(int *selected_aux_item, int inventory_size, int offset);
 
 #endif // WINDOW_H
