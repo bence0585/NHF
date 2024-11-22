@@ -88,6 +88,16 @@ void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, Invento
         // Render item from item_tilemap
         SDL_FRect src_rect = {i * 16, item_offset, 16, 16}; // Source size is 16x16
         SDL_RenderTexture(renderer, item_tilemap, &src_rect, &item_rect);
+
+        // Render item count for auxiliary items
+        if (item_offset == 16 || item_offset == 32)
+        {
+            char count_text[4];
+            int count = (item_offset == 16) ? inventory_selection->seed_counts[i] : inventory_selection->harvest_counts[i];
+            snprintf(count_text, sizeof(count_text), "%d", count);
+            SDL_Color white = {255, 255, 255, 255};
+            render_text(renderer, count_text, white, item_rect.x + 5, item_rect.y + 5, 20, 20);
+        }
     }
 }
 

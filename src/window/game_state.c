@@ -1,10 +1,9 @@
-
 #include "window.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 
-void save_game_state(const char *filename, int character_x, int character_y)
+void save_game_state(const char *filename, int character_x, int character_y, InventorySelection *inventory_selection)
 {
     FILE *file = fopen(filename, "w");
     if (file == NULL)
@@ -13,10 +12,20 @@ void save_game_state(const char *filename, int character_x, int character_y)
         return;
     }
     fprintf(file, "%d %d\n", character_x, character_y);
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        fprintf(file, "%d ", inventory_selection->seed_counts[i]);
+    }
+    fprintf(file, "\n");
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        fprintf(file, "%d ", inventory_selection->harvest_counts[i]);
+    }
+    fprintf(file, "\n");
     fclose(file);
 }
 
-void load_game_state(const char *filename, int *character_x, int *character_y)
+void load_game_state(const char *filename, int *character_x, int *character_y, InventorySelection *inventory_selection)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL)
@@ -24,9 +33,22 @@ void load_game_state(const char *filename, int *character_x, int *character_y)
         SDL_Log("Save file not found, creating a new one.");
         *character_x = 0;
         *character_y = 0;
-        save_game_state(filename, *character_x, *character_y);
+        for (int i = 0; i < INVENTORY_SIZE; i++)
+        {
+            inventory_selection->seed_counts[i] = 0;
+            inventory_selection->harvest_counts[i] = 0;
+        }
+        save_game_state(filename, *character_x, *character_y, inventory_selection);
         return;
     }
     fscanf(file, "%d %d", character_x, character_y);
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        fscanf(file, "%d", &inventory_selection->seed_counts[i]);
+    }
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        fscanf(file, "%d", &inventory_selection->harvest_counts[i]);
+    }
     fclose(file);
 }

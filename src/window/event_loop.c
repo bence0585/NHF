@@ -43,7 +43,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     Character character;
     initialize_character(&character, 0, 0); // Initialize character at top-left tile
 
-    load_game_state("../src/save_state.txt", &character.x, &character.y);
+    InventorySelection inventory_selection = {0, 0, 0}; // Initialize inventory selection
+    load_game_state("../src/save_state.txt", &character.x, &character.y, &inventory_selection);
     update_character_tile(&character, tilemap_width);
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
@@ -54,7 +55,6 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     SDL_SetTextureScaleMode(item_tilemap, SDL_SCALEMODE_NEAREST);
     SDL_Texture *crop_texture = load_texture(renderer, "../src/img/cropTilemap.png"); // Crop texture
     SDL_SetTextureScaleMode(crop_texture, SDL_SCALEMODE_NEAREST);
-    InventorySelection inventory_selection = {0, 0, 0}; // Initialize inventory selection
 
     int grid_width, grid_height;
     determine_grid_size("../src/grid_state.txt", &grid_width, &grid_height);
@@ -115,6 +115,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 {
                     SDL_Log("Kilepes: SDL3 ESC gomb");
                     quit = 1;
+                    save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
                 }
                 else if (event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
                 {
@@ -354,7 +355,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                      character.anim_ctrl.direction, character.anim_ctrl.is_walking,
                      character.equipped_tool, inventory_selection.selected_main_item,
                      inventory_selection.selected_aux_item, inventory_selection.selected_aux_inventory);
-            render_text(renderer, debug_text, white, screen_width - 1110, 50, 1100, 80); // Render debug info below FPS
+            render_text(renderer, debug_text, white, screen_width - 1410, 50, 1400, 30); // Render debug info below FPS
         }
 
         SDL_RenderPresent(renderer);

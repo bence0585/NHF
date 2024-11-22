@@ -70,7 +70,9 @@ typedef struct
 {
     int selected_main_item;
     int selected_aux_item;
-    int selected_aux_inventory; // 0 for none, 1 for seed pouch, 2 for harvest bag
+    int selected_aux_inventory;         // 0 for none, 1 for seed pouch, 2 for harvest bag
+    int seed_counts[INVENTORY_SIZE];    // Counts for seeds
+    int harvest_counts[INVENTORY_SIZE]; // Counts for harvests
 } InventorySelection;
 
 // Inicializálás
@@ -111,8 +113,8 @@ void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, Invento
 void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelection *inventory_selection, int screen_width, int screen_height);
 bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height, int *slot);
 
-void save_game_state(const char *filename, int character_x, int character_y);
-void load_game_state(const char *filename, int *character_x, int *character_y);
+void save_game_state(const char *filename, int character_x, int character_y, InventorySelection *inventory_selection);
+void load_game_state(const char *filename, int *character_x, int *character_y, InventorySelection *inventory_selection);
 
 typedef enum
 {
