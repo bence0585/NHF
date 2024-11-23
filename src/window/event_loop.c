@@ -33,7 +33,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 {
     SDL_Event event;
     int quit = 0;
-    double zoom_level = 1;
+    int zoom_level = 1;
     const int tilemap_width = 16;
     const int tilemap_height = tilemap_width;
     const int character_tile_width = tilemap_width;
@@ -116,6 +116,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     SDL_Log("Kilepes: SDL3 ESC gomb");
                     quit = 1;
                     save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
+                    save_grid_state("../src/grid_state.txt", grid);
+                    save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid);
                 }
                 else if (event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
                 {
@@ -213,54 +215,82 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     int x = event.button.x;
                     int y = event.button.y;
                     int slot;
-                    if (is_inventory_slot_clicked(x, y, screen_width, screen_height, &slot))
+                    bool button_clicked = false;
+
+                    if (is_button_clicked(BUTTON_ZOOM_IN, x, y))
                     {
-                        if (SDL_GetModState() & SDL_KMOD_SHIFT)
+                        if (zoom_level < 4)
                         {
-                            if (inventory_selection.selected_aux_inventory == 1)
+                            zoom_level += 1;
+                            button_clicked = true;
+                        }
+                    }
+                    else if (is_button_clicked(BUTTON_ZOOM_OUT, x, y))
+                    {
+                        if (zoom_level > 1)
+                        {
+                            zoom_level -= 1;
+                            button_clicked = true;
+                        }
+                    }
+                    else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
+                    {
+                        save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
+                        save_grid_state("../src/grid_state.txt", grid);
+                        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid);
+                        button_clicked = true;
+                    }
+
+                    if (!button_clicked)
+                    {
+                        if (is_inventory_slot_clicked(x, y, screen_width, screen_height, &slot))
+                        {
+                            if (SDL_GetModState() & SDL_KMOD_SHIFT)
                             {
-                                inventory_selection.selected_aux_item = slot + 16; // Offset for seeds
+                                if (inventory_selection.selected_aux_inventory == 1)
+                                {
+                                    inventory_selection.selected_aux_item = slot + 16; // Offset for seeds
+                                }
+                                else if (inventory_selection.selected_aux_inventory == 2)
+                                {
+                                    inventory_selection.selected_aux_item = slot + 32; // Offset for harvested products
+                                }
                             }
-                            else if (inventory_selection.selected_aux_inventory == 2)
+                            else
                             {
-                                inventory_selection.selected_aux_item = slot + 32; // Offset for harvested products
+                                inventory_selection.selected_main_item = slot;
+                                if (inventory_selection.selected_main_item == 3) // Seed pouch
+                                {
+                                    inventory_selection.selected_aux_inventory = 1;
+                                }
+                                else if (inventory_selection.selected_main_item == 4) // Harvest bag
+                                {
+                                    inventory_selection.selected_aux_inventory = 2;
+                                }
+                                else
+                                {
+                                    inventory_selection.selected_aux_inventory = 0;
+                                }
                             }
                         }
                         else
                         {
-                            inventory_selection.selected_main_item = slot;
-                            if (inventory_selection.selected_main_item == 3) // Seed pouch
+                            if (inventory_selection.selected_main_item < 3) // Update equipped tool based on selected item
                             {
-                                inventory_selection.selected_aux_inventory = 1;
-                            }
-                            else if (inventory_selection.selected_main_item == 4) // Harvest bag
-                            {
-                                inventory_selection.selected_aux_inventory = 2;
+                                character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
+                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                             }
                             else
                             {
-                                inventory_selection.selected_aux_inventory = 0;
+                                handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                             }
                         }
-                    }
-                    else
-                    {
                         if (inventory_selection.selected_main_item < 3) // Update equipped tool based on selected item
                         {
                             character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
                             handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                         }
-                        else
-                        {
-                            handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
-                        }
                     }
-                    if (inventory_selection.selected_main_item < 3) // Update equipped tool based on selected item
-                    {
-                        character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
-                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
-                    }
-                    // Add more button checks here
                 }
             }
         }

@@ -235,7 +235,7 @@ void update_tile_texture(Grid *grid, int grid_x, int grid_y)
     // Set the texture to 0xEC for hoed tiles in the background layer and update the optical layer to 0x00
     if (current_tile == TILE_HOE)
     {
-        grid->physical_layer[grid_x][grid_y] = 0xEC; // Set the texture to 0xEC
+        grid->physical_layer[grid_x][grid_y] = 0xE5; // Set the texture to 0xEC
         grid->optical_layer[grid_x][grid_y] = 0x00;  // Set the optical layer to 0x00
         SDL_Log("Set background texture to 0xEC and optical layer to 0x00 for hoed tile at (%d, %d)", grid_x, grid_y);
     }
