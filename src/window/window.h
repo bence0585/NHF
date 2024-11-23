@@ -133,8 +133,11 @@ void update_animation(AnimationController *anim_ctrl);
 typedef enum
 {
     TILE_EMPTY,
-    TILE_HOE,
+    TILE_HOE = 229, // Hoed ground
     TILE_WATERED,
+    TILE_CROP_1,
+    TILE_CROP_2,
+    TILE_CROP_3,
     // Add more tile types here
 } TileType;
 
@@ -148,6 +151,7 @@ typedef enum
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
 void update_tile_texture(Grid *grid, int grid_x, int grid_y);
 void on_tile_change(Grid *grid, int grid_x, int grid_y, TileType tile_type);
+TileType get_tile_type(Grid *grid, int grid_x, int grid_y);
 
 typedef enum
 {
@@ -184,7 +188,7 @@ void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager
 void game_tick(CropManager *crop_manager, int ticks);
 
 void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager);
-void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager);
+void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection);
 
 // Takarítás
 void cleanup(SDL_Renderer *renderer, SDL_Window *window);

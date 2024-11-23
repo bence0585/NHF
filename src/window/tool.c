@@ -16,9 +16,12 @@ void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int 
         break;
     case TOOL_WATERING_CAN:
         SDL_Log("Watering tile at (%d, %d)", target_x, target_y); // Log the watering action
-        set_tile_type(grid, target_x, target_y, TILE_WATERED);
-        update_tile_texture(grid, target_x, target_y);
-        on_tile_change(grid, target_x, target_y, TILE_WATERED); // Call on_tile_change
+        if (get_tile_type(grid, target_x, target_y) == TILE_HOE)
+        {
+            set_tile_type(grid, target_x, target_y, TILE_WATERED);
+            update_tile_texture(grid, target_x, target_y);
+            on_tile_change(grid, target_x, target_y, TILE_WATERED); // Call on_tile_change
+        }
         break;
     case TOOL_SICKLE:
         // Implement cutting action
@@ -27,21 +30,30 @@ void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int 
     }
 }
 
-void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager)
+void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection)
 {
-    switch (crop)
+    int seed_index = inventory_selection->selected_aux_item - 16; // Calculate the index for the seed type
+    SDL_Log("Attempting to plant seed of type %d at (%d, %d)", crop, grid_x, grid_y);
+
+    if (inventory_selection->seed_counts[seed_index] > 0) // Check if there are seeds available
     {
-    case CROP_SEED_1:
-    case CROP_SEED_2:
-    case CROP_SEED_3:
-        add_crop(crop_manager, grid_x, grid_y, 10);                              // Example growth time
-        save_foreground_grid_state("../src/foreground_grid_state.txt", fg_grid); // Save changes to the foreground grid state file
-        break;
-    case CROP_PRODUCT_1:
-    case CROP_PRODUCT_2:
-    case CROP_PRODUCT_3:
-        // Implement product action
-        break;
-        // Add more crop actions here
+        SDL_Log("Seed count before planting: %d", inventory_selection->seed_counts[seed_index]);
+
+        if (get_tile_type(grid, grid_x, grid_y) == TILE_HOE || get_tile_type(grid, grid_x, grid_y) == TILE_WATERED)
+        {
+            add_crop(crop_manager, grid_x, grid_y, 10);     // Example growth time
+            inventory_selection->seed_counts[seed_index]--; // Decrement the seed count
+            SDL_Log("Seed planted. New seed count: %d", inventory_selection->seed_counts[seed_index]);
+            fg_grid->foreground_layer[grid_x][grid_y] = crop;                        // Store the seed in the foreground grid state
+            save_foreground_grid_state("../src/foreground_grid_state.txt", fg_grid); // Save changes to the foreground grid state file
+        }
+        else
+        {
+            SDL_Log("Cannot plant seed. Tile is not hoed or watered.");
+        }
+    }
+    else
+    {
+        SDL_Log("No seeds available for planting. %d,%d", inventory_selection->seed_counts[seed_index], seed_index);
     }
 }

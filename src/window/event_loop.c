@@ -3,6 +3,29 @@
 #include <SDL3/SDL_render.h> // Include the correct header for SDL_RenderDrawPoint
 #include "window.h"
 
+// Function to get the name of the tile type
+const char *get_tile_type_name(TileType tile_type)
+{
+    switch (tile_type)
+    {
+    case TILE_EMPTY:
+        return "TILE_EMPTY";
+    case TILE_HOE:
+        return "TILE_HOE";
+    case TILE_WATERED:
+        return "TILE_WATERED";
+    case TILE_CROP_1:
+        return "TILE_CROP_1";
+    case TILE_CROP_2:
+        return "TILE_CROP_2";
+    case TILE_CROP_3:
+        return "TILE_CROP_3";
+    // Add more tile types here
+    default:
+        return "UNKNOWN";
+    }
+}
+
 void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
 {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -146,10 +169,12 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         if (inventory_selection.selected_main_item == 3) // Seed pouch
                         {
                             inventory_selection.selected_aux_inventory = 1;
+                            inventory_selection.selected_aux_item = 16; // Reset to first seed slot
                         }
                         else if (inventory_selection.selected_main_item == 4) // Harvest bag
                         {
                             inventory_selection.selected_aux_inventory = 2;
+                            inventory_selection.selected_aux_item = 32; // Reset to first harvest slot
                         }
                         else
                         {
@@ -159,7 +184,14 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 }
                 else if (event.key.key == SDLK_C)
                 {
-                    handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
+                    if (inventory_selection.selected_main_item < 3) // Tool action
+                    {
+                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
+                    }
+                    else // Planting action
+                    {
+                        handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
+                    }
                 }
                 else if (event.key.key == SDLK_L)
                 {
@@ -263,7 +295,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                                 {
                                     inventory_selection.selected_aux_inventory = 1;
                                 }
-                                else if (inventory_selection.selected_main_item == 4) // Harvest bag
+                                else if (inventory_selection.selected_main_item == 4)
                                 {
                                     inventory_selection.selected_aux_inventory = 2;
                                 }
@@ -275,20 +307,15 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         }
                         else
                         {
-                            if (inventory_selection.selected_main_item < 3) // Update equipped tool based on selected item
+                            if (inventory_selection.selected_main_item < 3) // Tool action
                             {
                                 character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
                                 handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                             }
-                            else
+                            else // Planting action
                             {
-                                handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
+                                handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
                             }
-                        }
-                        if (inventory_selection.selected_main_item < 3) // Update equipped tool based on selected item
-                        {
-                            character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
-                            handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
                         }
                     }
                 }
@@ -386,6 +413,32 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                      character.equipped_tool, inventory_selection.selected_main_item,
                      inventory_selection.selected_aux_item, inventory_selection.selected_aux_inventory);
             render_text(renderer, debug_text, white, screen_width - 1410, 50, 1400, 30); // Render debug info below FPS
+
+            // Render tile type info
+            TileType target_tile_type = get_tile_type(grid, character.look_tile_x, character.look_tile_y);
+            const char *target_tile_type_name = get_tile_type_name(target_tile_type);
+            char tile_type_text[256];
+            snprintf(tile_type_text, sizeof(tile_type_text), "Target Tile Type: %d (%s)", target_tile_type, target_tile_type_name);
+            render_text(renderer, tile_type_text, white, screen_width - 1410, 90, 1400, 30); // Render tile type info below debug info
+
+            // Render targeted tile crop info
+            for (int i = 0; i < crop_manager.crop_count; i++)
+            {
+                Crop *crop = &crop_manager.crops[i];
+                if (crop->x == character.look_tile_x && crop->y == character.look_tile_y)
+                {
+                    char target_crop_info[256];
+                    snprintf(target_crop_info, sizeof(target_crop_info), "Targeted Crop: Stage %d, Time %d/%d",
+                             crop->growth_stage, crop->current_time, crop->growth_time);
+                    render_text(renderer, target_crop_info, white, screen_width - 1410, 170, 1400, 30); // Render targeted crop info below other debug info
+                }
+            }
+
+            // Render targeted tile foreground grid info
+            int fg_tile_type = foreground_grid->foreground_layer[character.look_tile_x][character.look_tile_y];
+            char fg_tile_info[256];
+            snprintf(fg_tile_info, sizeof(fg_tile_info), "Foreground Tile Type: %d", fg_tile_type);
+            render_text(renderer, fg_tile_info, white, screen_width - 1410, 210, 1400, 30); // Render foreground grid info below targeted crop info
         }
 
         SDL_RenderPresent(renderer);
