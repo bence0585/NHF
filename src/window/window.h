@@ -82,6 +82,34 @@ typedef enum
     // Add more seed types here
 } SeedType;
 
+typedef enum
+{
+    SEED_PRICE_PARSNIP = 20,
+    SEED_PRICE_CAULIFLOWER = 80,
+    SEED_PRICE_COFFEE = 15,
+    SEED_PRICE_GREEN_BEAN = 60,
+    SEED_PRICE_HOPS = 30,
+    SEED_PRICE_POTATO = 50,
+    SEED_PRICE_STRAWBERRY = 100,
+    SEED_PRICE_MELON = 80,
+    SEED_PRICE_STARFRUIT = 200,
+    // Add more seed prices here
+} SeedPrice;
+
+typedef enum
+{
+    CROP_PRICE_PARSNIP = 35,
+    CROP_PRICE_CAULIFLOWER = 175,
+    CROP_PRICE_COFFEE = 20,
+    CROP_PRICE_GREEN_BEAN = 40,
+    CROP_PRICE_HOPS = 25,
+    CROP_PRICE_POTATO = 80,
+    CROP_PRICE_STRAWBERRY = 120,
+    CROP_PRICE_MELON = 250,
+    CROP_PRICE_STARFRUIT = 750,
+    // Add more crop prices here
+} CropPrice;
+
 typedef struct
 {
     int selected_main_item;
@@ -91,6 +119,7 @@ typedef struct
     int harvest_counts[INVENTORY_SIZE];  // Counts for harvests
     SeedType seed_types[INVENTORY_SIZE]; // Types of seeds
     int total_seeds;                     // Add total_seeds field
+    int money;                           // Add money field
 } InventorySelection;
 
 // Inicializálás
@@ -289,5 +318,7 @@ static const int foreground_collision_tiles[] = {
 };
 
 void update_collision_data(const char *filename, Grid *grid, ForegroundGrid *fg_grid);
+
+void handle_shop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, InventorySelection *inventory_selection);
 
 #endif // WINDOW_H

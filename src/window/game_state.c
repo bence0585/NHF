@@ -28,6 +28,7 @@ void save_game_state(const char *filename, int character_x, int character_y, Inv
         fprintf(file, "%03d ", inventory_selection->seed_types[i]); // Line 4: seed types
     }
     fprintf(file, "\n%d\n", inventory_selection->total_seeds); // Line 5: total seeds
+    fprintf(file, "%d\n", inventory_selection->money);         // Line 6: money
     fclose(file);
 }
 
@@ -46,6 +47,7 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
             inventory_selection->seed_types[i] = (SeedType)i; // Initialize seed types from 0 to 8
         }
         inventory_selection->total_seeds = 0; // Initialize total_seeds
+        inventory_selection->money = 100;     // Initialize money
         save_game_state(filename, *character_x, *character_y, inventory_selection);
         return;
     }
@@ -63,6 +65,7 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
         fscanf(file, "%03d", (int *)&inventory_selection->seed_types[i]); // Line 4: seed types
     }
     fscanf(file, "%d\n", &inventory_selection->total_seeds); // Line 5: total seeds
+    fscanf(file, "%d\n", &inventory_selection->money);       // Line 6: money
     fclose(file);
 }
 

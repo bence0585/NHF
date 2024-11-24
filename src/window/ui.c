@@ -115,6 +115,12 @@ void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelec
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);           // Blue color
     SDL_RenderFillRect(renderer, &save_game_button);
 
+    // Render money info
+    char money_text[20];
+    snprintf(money_text, sizeof(money_text), "Money: %d", inventory_selection->money);
+    SDL_Color white = {255, 255, 255, 255};
+    render_text(renderer, money_text, white, 10.0f, 80.0f, 200.0f, 30.0f); // Position below the zoom buttons
+
     int inventory_y = screen_height - ITEM_SIZE - 20; // 20 pixels from the bottom
     render_inventory(renderer, item_tilemap, inventory_selection, screen_width, screen_height, inventory_y, 0);
 

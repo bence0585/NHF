@@ -198,6 +198,13 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         handle_crop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
                     }
                 }
+                else if (event.key.key == SDLK_X)
+                {
+                    if (inventory_selection.selected_main_item == 3 || inventory_selection.selected_main_item == 4) // Shop action
+                    {
+                        handle_shop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &inventory_selection);
+                    }
+                }
                 else if (event.key.key == SDLK_L)
                 {
                     toggle_collision_data("../src/collisions.txt", grid, character.tile_x, character.tile_y);

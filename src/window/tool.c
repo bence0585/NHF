@@ -87,7 +87,8 @@ void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int gri
             // Update the foreground grid state with the crop type
             fg_grid->foreground_layer[grid_x][grid_y] = crop_info[crop_type].texture_start;
 
-            // Do not save the foreground grid state to the file here
+            // Save the foreground grid state to the file
+            save_foreground_grid_state("../src/foreground_grid_state.txt", fg_grid);
         }
         else
         {
@@ -141,6 +142,115 @@ void handle_harvest_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int 
             fg_grid->foreground_layer[grid_x][grid_y] = 0;
 
             break;
+        }
+    }
+}
+
+void handle_shop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, InventorySelection *inventory_selection)
+{
+    int tile_type = fg_grid->foreground_layer[grid_x][grid_y];
+    if (tile_type == 0xD8 || tile_type == 0xD9 || tile_type == 0xE8 || tile_type == 0xE9) // Shop tiles
+    {
+        if (inventory_selection->selected_main_item == 3) // Seed pouch
+        {
+            int seed_index = inventory_selection->selected_aux_item - 16;
+            SeedType seed_type = (SeedType)seed_index;
+            int seed_price = 0;
+
+            switch (seed_type)
+            {
+            case SEED_PARSNIP:
+                seed_price = SEED_PRICE_PARSNIP;
+                break;
+            case SEED_CAULIFLOWER:
+                seed_price = SEED_PRICE_CAULIFLOWER;
+                break;
+            case SEED_COFFEE:
+                seed_price = SEED_PRICE_COFFEE;
+                break;
+            case SEED_GREEN_BEAN:
+                seed_price = SEED_PRICE_GREEN_BEAN;
+                break;
+            case SEED_HOPS:
+                seed_price = SEED_PRICE_HOPS;
+                break;
+            case SEED_POTATO:
+                seed_price = SEED_PRICE_POTATO;
+                break;
+            case SEED_STRAWBERRY:
+                seed_price = SEED_PRICE_STRAWBERRY;
+                break;
+            case SEED_MELON:
+                seed_price = SEED_PRICE_MELON;
+                break;
+            case SEED_STARFRUIT:
+                seed_price = SEED_PRICE_STARFRUIT;
+                break;
+            default:
+                SDL_Log("Unknown seed type: %d", seed_type);
+                return;
+            }
+
+            if (inventory_selection->money >= seed_price)
+            {
+                inventory_selection->seed_counts[seed_index]++;
+                inventory_selection->money -= seed_price;
+                SDL_Log("Bought 1 seed of type %d for %d money. Remaining money: %d", seed_type, seed_price, inventory_selection->money);
+            }
+            else
+            {
+                SDL_Log("Not enough money to buy seed of type %d", seed_type);
+            }
+        }
+        else if (inventory_selection->selected_main_item == 4) // Harvest bag
+        {
+            int total_money = 0;
+            for (int i = 0; i < INVENTORY_SIZE; i++)
+            {
+                SeedType seed_type = inventory_selection->seed_types[i];
+                int seed_count = inventory_selection->harvest_counts[i];
+                int crop_price = 0;
+
+                switch (seed_type)
+                {
+                case SEED_PARSNIP:
+                    crop_price = CROP_PRICE_PARSNIP;
+                    break;
+                case SEED_CAULIFLOWER:
+                    crop_price = CROP_PRICE_CAULIFLOWER;
+                    break;
+                case SEED_COFFEE:
+                    crop_price = CROP_PRICE_COFFEE;
+                    break;
+                case SEED_GREEN_BEAN:
+                    crop_price = CROP_PRICE_GREEN_BEAN;
+                    break;
+                case SEED_HOPS:
+                    crop_price = CROP_PRICE_HOPS;
+                    break;
+                case SEED_POTATO:
+                    crop_price = CROP_PRICE_POTATO;
+                    break;
+                case SEED_STRAWBERRY:
+                    crop_price = CROP_PRICE_STRAWBERRY;
+                    break;
+                case SEED_MELON:
+                    crop_price = CROP_PRICE_MELON;
+                    break;
+                case SEED_STARFRUIT:
+                    crop_price = CROP_PRICE_STARFRUIT;
+                    break;
+                default:
+                    SDL_Log("Unknown seed type: %d", seed_type);
+                    continue;
+                }
+
+                total_money += seed_count * crop_price;
+                inventory_selection->harvest_counts[i] = 0; // Clear the harvest count
+            }
+
+            inventory_selection->money += total_money;
+            SDL_Log("Sold all harvested crops for %d money. Total money: %d", total_money, inventory_selection->money);
         }
     }
 }
