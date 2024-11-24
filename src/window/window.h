@@ -164,11 +164,21 @@ typedef enum
     // Add more crop types here
 } CropType;
 
+typedef enum
+{
+    CROP_PHASE_1,
+    CROP_PHASE_2,
+    CROP_PHASE_3,
+    CROP_PHASE_4,
+    CROP_PHASE_5,
+    CROP_PHASE_MAX // Maximum growth phase
+} CropPhase;
+
 typedef struct
 {
     int x;
     int y;
-    int growth_stage;
+    CropPhase growth_stage;
     int growth_time;  // Time required to grow to the next stage
     int current_time; // Current time spent growing
 } Crop;
