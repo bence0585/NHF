@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include <SDL3/SDL_render.h> // Tartalmazza a megfelelő fejlécet az SDL_RenderDrawPoint-hoz
+#include <SDL3/SDL_render.h> // SDL_RenderDrawPoint-hoz
 #include "window.h"
 /*
  * Visszaadja a megadott csempe típus nevét.
@@ -590,6 +590,12 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     int fps = 0;
     bool show_debug_info = false; // Debug információ megjelenítésének kapcsolója
 
+    /*
+        * A játék fő ciklusa.
+        * A játékot egy időegységgel előre lépteti minden másodpercben.
+        * A karakter mozgatása, nézési irányának frissítése, animációk frissítése, játék állapotának frissítése, játék kirajzolása, képkocka időzítése.
+
+    */
     while (!quit)
     {
         Uint32 frame_start = SDL_GetTicks();

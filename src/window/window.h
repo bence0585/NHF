@@ -135,8 +135,8 @@ void cleanup_font();
 Grid *create_grid(int width, int height);
 void destroy_grid(Grid *grid);
 void read_grid_state(const char *filename, Grid *grid);
-void read_collision_data(const char *filename, Grid *grid);                           // Add this declaration
-void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int grid_y); // Add this declaration
+void read_collision_data(const char *filename, Grid *grid);
+void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int grid_y);
 void save_grid_state(const char *filename, Grid *grid);
 void save_foreground_grid_state(const char *filename, ForegroundGrid *grid);
 void render_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, Grid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);

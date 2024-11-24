@@ -350,22 +350,25 @@ void read_collision_data(const char *filename, Grid *grid)
 
 void toggle_collision_data(const char *filename, Grid *grid, int grid_x, int grid_y)
 {
-    grid->collision_layer[grid_x][grid_y] = !grid->collision_layer[grid_x][grid_y];
-
-    SDL_Log("Toggling collision at (%d, %d)", grid_x, grid_y); // Log the coordinates
-
-    FILE *file = fopen(filename, "r+");
-    if (file == NULL)
+    if (!grid->collision_layer[grid_x][grid_y]) // Only toggle if currently 00
     {
-        SDL_Log("Collision data file error: %s", strerror(errno));
-        return;
+        grid->collision_layer[grid_x][grid_y] = true;
+
+        SDL_Log("Toggling collision at (%d, %d)", grid_x, grid_y); // Log the coordinates
+
+        FILE *file = fopen(filename, "r+");
+        if (file == NULL)
+        {
+            SDL_Log("Collision data file error: %s", strerror(errno));
+            return;
+        }
+
+        int line_length = grid->width * 3;                              // Each 2-digit hex number is followed by a space
+        fseek(file, grid_y * (line_length + 1) + grid_x * 3, SEEK_SET); // Adjust for newline characters
+        fprintf(file, "%02X", 0xFF);
+
+        fclose(file);
     }
-
-    int line_length = grid->width * 3;                              // Each 2-digit hex number is followed by a space
-    fseek(file, grid_y * (line_length + 1) + grid_x * 3, SEEK_SET); // Adjust for newline characters
-    fprintf(file, "%02X", grid->collision_layer[grid_x][grid_y] ? 0xFF : 0x00);
-
-    fclose(file);
 }
 
 void save_grid_state(const char *filename, Grid *grid)
@@ -435,7 +438,7 @@ void update_collision_data(const char *filename, Grid *grid, ForegroundGrid *fg_
     {
         for (int j = 0; j < grid->width; j++)
         {
-            bool collision = false;
+            bool collision = grid->collision_layer[j][i]; // Preserve existing collision state
 
             // Check background grid for collision tiles
             for (int k = 0; k < sizeof(background_collision_tiles) / sizeof(int); k++)
@@ -457,7 +460,7 @@ void update_collision_data(const char *filename, Grid *grid, ForegroundGrid *fg_
                 }
             }
 
-            fprintf(file, "%02X ", collision ? 0xFF : 0x00);
+            fprintf(file, "%02X ", collision ? 0xFF : (grid->collision_layer[j][i] ? 0xFF : 0x00));
         }
         fprintf(file, "\n");
     }
