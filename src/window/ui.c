@@ -22,6 +22,11 @@ int initialize_font(const char *font_path, int font_size)
 
 void render_text(SDL_Renderer *renderer, const char *text, SDL_Color color, float x, float y, float w, float h)
 {
+    // Render background rectangle
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 10);            // Less opaque black
+    SDL_FRect background_rect = {x - 2, y - 2, w + 4, h + 4}; // Slightly larger than text
+    SDL_RenderFillRect(renderer, &background_rect);
+
     SDL_Surface *surface = TTF_RenderText_Blended(font, text, strlen(text), color);
     if (!surface)
     {
