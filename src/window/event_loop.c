@@ -158,8 +158,27 @@ void initialize_game(SDL_Renderer *renderer, Character *character, InventorySele
 }
 
 /*
-
-*/
+ * Játék kirajzolása.
+ * @param renderer rajzoló mutatója
+ * @param character karakter mutatója
+ * @param inventory_selection inventárválasztó mutatója
+ * @param grid rács mutatója
+ * @param foreground_grid előtér rács mutatója
+ * @param crop_manager növénykezelő mutatója
+ * @param tilemap csempetérkép textúra
+ * @param character_tileset karakter textúra
+ * @param item_tilemap tárgy textúra
+ * @param crop_texture növény textúra
+ * @param screen_width képernyő szélesség
+ * @param screen_height képernyő magasság
+ * @param zoom_level nagyítási szint
+ * @param fps képkocka per másodperc
+ * @param show_debug_info debug információ megjelenítése
+ * @return void
+ * @note A karaktert és az előtér rácsot a háttér rács előtt rajzolja ki.
+ * @note A karakter alatt árnyékot rajzol.
+ * @note A karaktert a karakterláda és a UI előtt rajzolja ki.
+ */
 void render_game(SDL_Renderer *renderer, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, SDL_Texture *tilemap, SDL_Texture *character_tileset, SDL_Texture *item_tilemap, SDL_Texture *crop_texture, int screen_width, int screen_height, int zoom_level, int fps, bool show_debug_info)
 {
     int tilemap_width = TILE_SIZE;

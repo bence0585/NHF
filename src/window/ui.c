@@ -90,7 +90,7 @@ void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, Invento
     int inventory_width = inventory_size * (item_size + padding) - padding;
     int inventory_x = (screen_width - inventory_width) / 2;
     int border_thickness = 4;
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color for borders
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Fehér szín a keretekhez
 
     for (int i = 0; i < inventory_size; i++)
     {
@@ -152,7 +152,7 @@ void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelec
 
     // Pénzszámláló kirajzolása
     char money_text[20];
-    snprintf(money_text, sizeof(money_text), "Péz: %d", inventory_selection->money);
+    snprintf(money_text, sizeof(money_text), "Pénz: %d", inventory_selection->money);
     SDL_Color white = {255, 255, 255, 255};
     render_text(renderer, money_text, white, 10.0f, 80.0f, 200.0f, 30.0f); // Zoom gombok alá pozícionálva
 
@@ -182,16 +182,16 @@ void render_button(SDL_Renderer *renderer, ButtonType button)
     switch (button)
     {
     case BUTTON_ZOOM_IN:
-        button_rect = (SDL_FRect){10.0f, 10.0f, 60.0f, 60.0f}; // Increased button size
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);      // Zöld szín
+        button_rect = (SDL_FRect){10.0f, 10.0f, 60.0f, 60.0f};
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         break;
     case BUTTON_ZOOM_OUT:
-        button_rect = (SDL_FRect){80.0f, 10.0f, 60.0f, 60.0f}; // Increased button size
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);      // Red color
+        button_rect = (SDL_FRect){80.0f, 10.0f, 60.0f, 60.0f};
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         break;
     case BUTTON_SAVE_GAME:
-        button_rect = (SDL_FRect){150.0f, 10.0f, 60.0f, 60.0f}; // Increased button size
-        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);       // Blue color
+        button_rect = (SDL_FRect){150.0f, 10.0f, 60.0f, 60.0f};
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         break;
     }
     SDL_RenderFillRect(renderer, &button_rect);
@@ -209,12 +209,11 @@ bool is_button_clicked(ButtonType button, int x, int y)
     switch (button)
     {
     case BUTTON_ZOOM_IN:
-        return (x >= 10 && x <= 70 && y >= 10 && y <= 70); // Adjusted for increased button size
+        return (x >= 10 && x <= 70 && y >= 10 && y <= 70);
     case BUTTON_ZOOM_OUT:
-        return (x >= 80 && x <= 140 && y >= 10 && y <= 70); // Adjusted for increased button size
+        return (x >= 80 && x <= 140 && y >= 10 && y <= 70);
     case BUTTON_SAVE_GAME:
-        return (x >= 150 && x <= 210 && y >= 10 && y <= 70); // Adjusted for increased button size
-        // Add more cases for additional buttons
+        return (x >= 150 && x <= 210 && y >= 10 && y <= 70);
     }
     return false;
 }
