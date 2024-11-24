@@ -353,6 +353,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
         render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
 
+        render_crops(renderer, crop_texture, &crop_manager, tilemap_width, zoom_level, offset_x, offset_y); // Render crops before character and UI
+
         highlight_grid_square(renderer, character.tile_x, character.tile_y, tilemap_width, zoom_level, offset_x, offset_y);
         highlight_look_square(renderer, character.look_tile_x, character.look_tile_y, tilemap_width, zoom_level, offset_x, offset_y);
 
@@ -381,8 +383,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         render_button(renderer, BUTTON_ZOOM_OUT);
         // render_button(renderer, BUTTON_SAVE_GAME); // Commented out
 
-        render_ui(renderer, item_tilemap, &inventory_selection, screen_width, screen_height);
-        render_crops(renderer, crop_texture, &crop_manager, tilemap_width, zoom_level, offset_x, offset_y);
+        render_ui(renderer, item_tilemap, &inventory_selection, screen_width, screen_height); // Render UI after character
 
         SDL_Color white = {255, 255, 255, 255};
         char fps_text[10];

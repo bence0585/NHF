@@ -11,22 +11,22 @@ void save_game_state(const char *filename, int character_x, int character_y, Inv
         SDL_Log("Error opening save file: %s", strerror(errno));
         return;
     }
-    fprintf(file, "%d %d\n", character_x, character_y);
+    fprintf(file, "%d %d\n", character_x, character_y); // Line 1: character coordinates
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%03d ", inventory_selection->seed_counts[i]); // Use %03d to ensure 3-digit formatting
+        fprintf(file, "%03d ", inventory_selection->seed_counts[i]); // Line 2: seed counts
     }
     fprintf(file, "\n");
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%03d ", inventory_selection->harvest_counts[i]); // Use %03d to ensure 3-digit formatting
+        fprintf(file, "%03d ", inventory_selection->harvest_counts[i]); // Line 3: harvest counts
     }
     fprintf(file, "\n");
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%03d ", inventory_selection->seed_types[i]); // Use %03d to ensure 3-digit formatting
+        fprintf(file, "%03d ", inventory_selection->seed_types[i]); // Line 4: seed types
     }
-    fprintf(file, "\n%d\n", inventory_selection->total_seeds); // Save total_seeds with newline
+    fprintf(file, "\n%d\n", inventory_selection->total_seeds); // Line 5: total seeds
     fclose(file);
 }
 
@@ -48,19 +48,19 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
         save_game_state(filename, *character_x, *character_y, inventory_selection);
         return;
     }
-    fscanf(file, "%d %d", character_x, character_y);
+    fscanf(file, "%d %d", character_x, character_y); // Line 1: character coordinates
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%03d", &inventory_selection->seed_counts[i]); // Use %03d to ensure 3-digit formatting
+        fscanf(file, "%03d", &inventory_selection->seed_counts[i]); // Line 2: seed counts
     }
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%03d", &inventory_selection->harvest_counts[i]); // Use %03d to ensure 3-digit formatting
+        fscanf(file, "%03d", &inventory_selection->harvest_counts[i]); // Line 3: harvest counts
     }
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%03d", (int *)&inventory_selection->seed_types[i]); // Use %03d to ensure 3-digit formatting
+        fscanf(file, "%03d", (int *)&inventory_selection->seed_types[i]); // Line 4: seed types
     }
-    fscanf(file, "%d\n", &inventory_selection->total_seeds); // Load total_seeds with newline
+    fscanf(file, "%d\n", &inventory_selection->total_seeds); // Line 5: total seeds
     fclose(file);
 }
