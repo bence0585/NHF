@@ -1,6 +1,7 @@
 #include "window.h"
+#include <stdlib.h> // Include stdlib.h for realloc
 
-void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager)
+void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection)
 {
     // Use the targeted tile coordinates instead of the character's feet
     int target_x = grid_x;
@@ -12,7 +13,6 @@ void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int 
         SDL_Log("Hoeing tile at (%d, %d)", target_x, target_y); // Log the hoeing action
         set_tile_type(grid, target_x, target_y, TILE_HOE);
         update_tile_texture(grid, target_x, target_y);
-        on_tile_change(grid, target_x, target_y, TILE_HOE); // Call on_tile_change
         break;
     case TOOL_WATERING_CAN:
         SDL_Log("Watering tile at (%d, %d)", target_x, target_y); // Log the watering action
@@ -20,11 +20,11 @@ void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int 
         {
             set_tile_type(grid, target_x, target_y, TILE_WATERED);
             update_tile_texture(grid, target_x, target_y);
-            on_tile_change(grid, target_x, target_y, TILE_WATERED); // Call on_tile_change
         }
         break;
     case TOOL_SICKLE:
-        // Implement cutting action
+        SDL_Log("Using sickle at (%d, %d)", target_x, target_y); // Log the sickle action
+        handle_harvest_action(grid, fg_grid, target_x, target_y, crop_manager, inventory_selection);
         break;
         // Add more tool actions here
     }
@@ -80,8 +80,8 @@ void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int gri
         if ((get_tile_type(grid, grid_x, grid_y) == TILE_HOE || get_tile_type(grid, grid_x, grid_y) == TILE_WATERED) &&
             fg_grid->foreground_layer[grid_x][grid_y] == 0) // Check if the foreground is clear
         {
-            add_crop(crop_manager, grid_x, grid_y, crop_type, 10); // Example growth time
-            inventory_selection->seed_counts[seed_index]--;        // Decrement the seed count in memory
+            add_crop(crop_manager, grid_x, grid_y, crop_type, 1); // Example growth time
+            inventory_selection->seed_counts[seed_index]--;       // Decrement the seed count in memory
             SDL_Log("Seed planted. New seed count: %d", inventory_selection->seed_counts[seed_index]);
 
             // Update the foreground grid state with the crop type
@@ -97,5 +97,56 @@ void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int gri
     else
     {
         SDL_Log("No seeds available for planting. %d,%d", inventory_selection->seed_counts[seed_index], seed_index);
+    }
+}
+
+void handle_harvest_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection)
+{
+    for (int i = 0; i < crop_manager->crop_count; i++)
+    {
+        Crop *crop = &crop_manager->crops[i];
+        if (crop->x == grid_x && crop->y == grid_y && crop->growth_stage == crop_info[crop->type].growth_stages - 1)
+        {
+            SDL_Log("Harvesting crop at (%d, %d)", grid_x, grid_y);
+
+            // Add the harvested crop to the inventory
+            bool added_to_inventory = false;
+            for (int j = 0; j < INVENTORY_SIZE; j++)
+            {
+                if (inventory_selection->harvest_counts[j] == 0)
+                {
+                    inventory_selection->harvest_counts[j] = 1;
+                    inventory_selection->seed_types[j] = (SeedType)crop->type;
+                    added_to_inventory = true;
+                    break;
+                }
+                else if (inventory_selection->seed_types[j] == (SeedType)crop->type)
+                {
+                    inventory_selection->harvest_counts[j]++;
+                    added_to_inventory = true;
+                    break;
+                }
+            }
+
+            if (!added_to_inventory)
+            {
+                SDL_Log("Inventory full, could not add harvested crop.");
+                return;
+            }
+
+            // Remove the crop from the crop manager
+            crop_manager->crops[i] = crop_manager->crops[crop_manager->crop_count - 1];
+            crop_manager->crop_count--;
+            crop_manager->crops = realloc(crop_manager->crops, crop_manager->crop_count * sizeof(Crop));
+
+            // Clear the tile back to the hoed phase
+            set_tile_type(grid, grid_x, grid_y, TILE_HOE);
+            update_tile_texture(grid, grid_x, grid_y);
+
+            // Clear the foreground grid
+            fg_grid->foreground_layer[grid_x][grid_y] = 0;
+
+            break;
+        }
     }
 }

@@ -241,13 +241,6 @@ void update_tile_texture(Grid *grid, int grid_x, int grid_y)
     }
 }
 
-void on_tile_change(Grid *grid, int grid_x, int grid_y, TileType tile_type)
-{
-    // Handle changes in the grid system
-    // For example, update neighbors or trigger other events
-    // ...implement the logic here...
-}
-
 ForegroundGrid *create_foreground_grid(int width, int height)
 {
     ForegroundGrid *grid = (ForegroundGrid *)malloc(sizeof(ForegroundGrid));

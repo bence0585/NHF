@@ -168,7 +168,6 @@ typedef enum
 
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
 void update_tile_texture(Grid *grid, int grid_x, int grid_y);
-void on_tile_change(Grid *grid, int grid_x, int grid_y, TileType tile_type);
 TileType get_tile_type(Grid *grid, int grid_x, int grid_y);
 
 typedef enum
@@ -242,8 +241,9 @@ void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager
 // Tick system
 void game_tick(CropManager *crop_manager, int ticks);
 
-void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager);
+void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection);
 void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection);
+void handle_harvest_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection);
 
 // Takarítás
 void cleanup(SDL_Renderer *renderer, SDL_Window *window);

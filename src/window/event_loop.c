@@ -186,7 +186,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 {
                     if (inventory_selection.selected_main_item < 3) // Tool action
                     {
-                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
+                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
                     }
                     else // Planting action
                     {
@@ -310,7 +310,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                             if (inventory_selection.selected_main_item < 3) // Tool action
                             {
                                 character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
-                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager);
+                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
                             }
                             else // Planting action
                             {
