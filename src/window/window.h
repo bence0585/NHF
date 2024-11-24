@@ -171,7 +171,7 @@ int initialize_SDLTTF();
 SDL_Window *create_window(const char *title, int width, int height);
 SDL_Renderer *create_renderer(SDL_Window *window);
 
-// Text rendering functions
+// Szöveg függvények
 int initialize_font(const char *font_path, int font_size);
 void render_text(SDL_Renderer *renderer, const char *text, SDL_Color color, float x, float y, float w, float h);
 void cleanup_font();
@@ -264,7 +264,6 @@ typedef enum
     CROP_STRAWBERRY,  // Eper
     CROP_MELON,       // Dinnye
     CROP_STARFRUIT,   // Csillaggyümölcs
-    // Add more crop types here
 } CropType;
 
 /**
@@ -292,7 +291,6 @@ static const CropInfo crop_info[] = {
     {CROP_STRAWBERRY, "Strawberry", 7, 0x50},
     {CROP_MELON, "Melon", 7, 0x78},
     {CROP_STARFRUIT, "Starfruit", 7, 0x70},
-    // Add more crop info here
 };
 
 /**
@@ -380,16 +378,14 @@ void handle_aux_selection(int *selected_aux_item, int inventory_size, int offset
 
 static const int background_collision_tiles[] = {
     0x89,
-    // Add more background collision tiles here
 };
 
 static const int foreground_collision_tiles[] = {
-    0xE8, // Replace 0xXX with actual hex code
-    0xE9, // Add more foreground collision tiles here
-    0xD8, // Replace 0xXX with actual hex code
-    0xD9, // Add more foreground collision tiles here
+    0xE8,
+    0xE9,
+    0xD8,
+    0xD9,
 
-    // Add more foreground collision tiles here
 };
 
 void update_collision_data(const char *filename, Grid *grid, ForegroundGrid *fg_grid);
