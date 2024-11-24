@@ -4,6 +4,14 @@
 #include <string.h>
 #include <stdlib.h> // Tartalmazza a stdlib.h-t a malloc-hoz
 
+/*
+ * Mentési fájl létrehozása és a játékállapot mentése.
+ * @param filename a mentési fájl neve
+ * @param character_x a karakter x koordinátája
+ * @param character_y a karakter y koordinátája
+ * @param inventory_selection az inventárválasztó mutatója
+ * @return void
+ */
 void save_game_state(const char *filename, int character_x, int character_y, InventorySelection *inventory_selection)
 {
     FILE *file = fopen(filename, "w");
@@ -32,6 +40,15 @@ void save_game_state(const char *filename, int character_x, int character_y, Inv
     fclose(file);
 }
 
+/*
+ * Betölti a játékállapotot a mentési fájlból.
+ * Ha a fájl nem található, új fájlt hoz létre alapértelmezett értékekkel.
+ * @param filename a mentési fájl neve
+ * @param character_x a karakter x koordinátájának mutatója
+ * @param character_y a karakter y koordinátájának mutatója
+ * @param inventory_selection az inventárválasztó mutatója
+ * @return void
+ */
 void load_game_state(const char *filename, int *character_x, int *character_y, InventorySelection *inventory_selection)
 {
     FILE *file = fopen(filename, "r");
@@ -69,6 +86,12 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
     fclose(file);
 }
 
+/*
+ * Mentési fájl létrehozása és a növényállapot mentése.
+ * @param filename a mentési fájl neve
+ * @param crop_manager a növénykezelő mutatója
+ * @return void
+ */
 void save_crop_state(const char *filename, CropManager *crop_manager)
 {
     FILE *file = fopen(filename, "w");
@@ -88,6 +111,13 @@ void save_crop_state(const char *filename, CropManager *crop_manager)
     fclose(file);
 }
 
+/*
+ * Betölti a növényállapotot a mentési fájlból.
+ * Ha a fájl nem található, új fájlt hoz létre alapértelmezett értékekkel.
+ * @param filename a mentési fájl neve
+ * @param crop_manager a növénykezelő mutatója
+ * @return void
+ */
 void load_crop_state(const char *filename, CropManager *crop_manager)
 {
     FILE *file = fopen(filename, "r");
