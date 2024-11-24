@@ -300,7 +300,6 @@ void handle_character_movement(const bool *state, Character *character, Grid *gr
 void calculate_look_coordinates(Character *character, int tile_size);
 void update_look_tile(Character *character, int tile_size);
 
-void handle_seed_harvest_selection(int *selected_item, int inventory_size, int offset);
 void handle_aux_selection(int *selected_aux_item, int inventory_size, int offset);
 
 static const int background_collision_tiles[] = {

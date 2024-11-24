@@ -34,7 +34,7 @@ const char *get_tile_type_name(TileType tile_type)
 void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
 {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 64); // Semi-transparent black
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 64); // Enyhén átlátszó fekete
 
     for (int w = 0; w < radius * 2; w++)
     {
@@ -64,14 +64,373 @@ void game_tick(CropManager *crop_manager, int ticks, Grid *grid)
 {
     update_crops(crop_manager, ticks, grid);
 }
-
 /*
+    * Billentyű lenyomás esemény kezelése.
+    * @param event esemény mutatója
+    * @param character karakter mutatója
+    * @param inventory_selection inventárválasztó mutatója
+    * @param grid rács mutatója
+    * @param foreground_grid előtér rács mutatója
+    * @param crop_manager növénykezelő mutatója
+    * @param quit kilépési változó
+    * @param show_debug_info debug információ megjelenítése
+    * @return void
+    * @note Az ESC gomb lenyomására kilép a játékból.
+    * @note Az 1-9 számok lenyomására az inventárválasztóban választott tárgyakat állítja be.
+    * @note A SHIFT + 1-9 számok lenyomására az aux tárgyakat állítja be.
+    * @note A C gomb lenyomására a karakter által kiválasztott eszköz műveletét hajtja végre.
+    * @note Az X gomb lenyomására a karakter által kiválasztott eszköz bolti műveletét hajtja végre.
+    * @note Az L gomb lenyomására az ütközési adatokat módosítja.
+    * @note Az F2 gomb lenyomására a debug információ megjelenítését kapcsolja.
+    * @note A karakter által kiválasztott eszköz műveletei: kapálás, öntözés, betakarítás.
+    * @note A karakter által kiválasztott eszköz bolti műveletei: vetőmag vásárlás, termény eladás.
+    * @note Az ütközési adatok módosítása: az adott csempe ütközési állapotát módosítja.
 
 */
+void handle_key_down(SDL_Event *event, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, bool *quit, bool *show_debug_info)
+{
+    if (event->key.key == SDLK_ESCAPE)
+    {
+        SDL_Log("Kilepes: SDL3 ESC gomb");
+        *quit = true;
+        save_game_state("../src/save_state.txt", character->x, character->y, inventory_selection);
+        save_grid_state("../src/grid_state.txt", grid);
+        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
+        save_crop_state("../src/crop_state.txt", crop_manager);                          // Save the current state of the crops
+        update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
+    }
+    else if (event->key.key >= SDLK_1 && event->key.key <= SDLK_9)
+    {
+        if (SDL_GetModState() & SDL_KMOD_SHIFT)
+        {
+            if (inventory_selection->selected_aux_inventory == 1) // Seed pouch
+            {
+                inventory_selection->selected_aux_item = 16 + (event->key.key - SDLK_1);
+            }
+            else if (inventory_selection->selected_aux_inventory == 2) // Harvest bag
+            {
+                inventory_selection->selected_aux_item = 32 + (event->key.key - SDLK_1);
+            }
+        }
+        else
+        {
+            inventory_selection->selected_main_item = event->key.key - SDLK_1;
+            if (inventory_selection->selected_main_item >= INVENTORY_SIZE)
+            {
+                inventory_selection->selected_main_item = INVENTORY_SIZE - 1;
+            }
+            if (inventory_selection->selected_main_item < 3) // Update equipped tool based on selected item
+            {
+                character->equipped_tool = (ToolType)inventory_selection->selected_main_item;
+            }
+            if (inventory_selection->selected_main_item == 3) // Seed pouch
+            {
+                inventory_selection->selected_aux_inventory = 1;
+                inventory_selection->selected_aux_item = 16; // Reset to first seed slot
+            }
+            else if (inventory_selection->selected_main_item == 4) // Harvest bag
+            {
+                inventory_selection->selected_aux_inventory = 2;
+                inventory_selection->selected_aux_item = 32; // Reset to first harvest slot
+            }
+            else
+            {
+                inventory_selection->selected_aux_inventory = 0;
+            }
+        }
+    }
+    else if (event->key.key == SDLK_C)
+    {
+        if (inventory_selection->selected_main_item < 3) // Tool action
+        {
+            handle_tool_action(character->equipped_tool, grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+        }
+        else // Planting action
+        {
+            handle_crop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+        }
+    }
+    else if (event->key.key == SDLK_X)
+    {
+        if (inventory_selection->selected_main_item == 3 || inventory_selection->selected_main_item == 4) // Shop action
+        {
+            handle_shop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, inventory_selection);
+        }
+    }
+    else if (event->key.key == SDLK_L)
+    {
+        toggle_collision_data("../src/collisions.txt", grid, character->tile_x, character->tile_y);
+        read_collision_data("../src/collisions.txt", grid); // Read collision data again
+    }
+    else if (event->key.key == SDLK_F2)
+    {
+        *show_debug_info = !*show_debug_info; // Toggle debug info
+    }
+}
+
+/*
+ * Egér görgő esemény kezelése.
+ * @param event esemény mutatója
+ * @param character karakter mutatója
+ * @param screen_width képernyő szélesség
+ * @param screen_height képernyő magasság
+ * @param zoom_level nagyítási szint
+ * @return void
+ * @note Az egér görgőjével a karakterláda tárgyait lehet váltani.
+ * @note A SHIFT gomb lenyomásával a vetőmagokat és betakarított terményeket lehet váltani.
+ */
+
+void handle_mouse_wheel(SDL_Event *event, InventorySelection *inventory_selection)
+{
+    if (SDL_GetModState() & SDL_KMOD_SHIFT)
+    {
+        if (inventory_selection->selected_aux_inventory == 1) // Seed pouch
+        {
+            inventory_selection->selected_aux_item = 16 + (inventory_selection->selected_aux_item - 16 + (event->wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
+        }
+        else if (inventory_selection->selected_aux_inventory == 2) // Harvest bag
+        {
+            inventory_selection->selected_aux_item = 32 + (inventory_selection->selected_aux_item - 32 + (event->wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
+        }
+    }
+    else
+    {
+        if (event->wheel.y > 0) // Scroll up
+        {
+            inventory_selection->selected_main_item = (inventory_selection->selected_main_item - 1 + INVENTORY_SIZE) % INVENTORY_SIZE;
+        }
+        else if (event->wheel.y < 0) // Scroll down
+        {
+            inventory_selection->selected_main_item = (inventory_selection->selected_main_item + 1) % INVENTORY_SIZE;
+        }
+        if (inventory_selection->selected_main_item == 3) // Seed pouch
+        {
+            inventory_selection->selected_aux_inventory = 1;
+        }
+        else if (inventory_selection->selected_main_item == 4) // Harvest bag
+        {
+            inventory_selection->selected_aux_inventory = 2;
+        }
+        else
+        {
+            inventory_selection->selected_aux_inventory = 0;
+        }
+    }
+}
+
+/*
+ * Egér gombok lenyomás esemény kezelése.
+ * @param event esemény mutatója
+ * @param character karakter mutatója
+ * @param inventory_selection inventárválasztó mutatója
+ * @param grid rács mutatója
+ * @param foreground_grid előtér rács mutatója
+ * @param crop_manager növénykezelő mutatója
+ * @param screen_width képernyő szélesség
+ * @param screen_height képernyő magasság
+ * @param zoom_level nagyítási szint
+ * @return void
+ * @note Az egér bal gomb lenyomásával a karakterláda tárgyait lehet váltani.
+ * @note Az egér bal gomb lenyomásával a nagyítási szintet lehet állítani.
+ * @note Az egér bal gomb lenyomásával a játékállapotot lehet menteni.
+ */
+void handle_mouse_button_down(SDL_Event *event, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, int screen_width, int screen_height, int *zoom_level)
+{
+    if (event->button.button == SDL_BUTTON_LEFT)
+    {
+        int x = event->button.x;
+        int y = event->button.y;
+        int slot;
+        bool button_clicked = false;
+
+        if (is_button_clicked(BUTTON_ZOOM_IN, x, y))
+        {
+            if (*zoom_level < 4)
+            {
+                (*zoom_level)++;
+                button_clicked = true;
+            }
+        }
+        else if (is_button_clicked(BUTTON_ZOOM_OUT, x, y))
+        {
+            if (*zoom_level > 1)
+            {
+                (*zoom_level)--;
+                button_clicked = true;
+            }
+        }
+        else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
+        {
+            save_game_state("../src/save_state.txt", character->x, character->y, inventory_selection);
+            save_grid_state("../src/grid_state.txt", grid);
+            save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
+            save_crop_state("../src/crop_state.txt", crop_manager);                          // Save the current state of the crops
+            update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
+            button_clicked = true;
+        }
+
+        if (!button_clicked)
+        {
+            if (is_inventory_slot_clicked(x, y, screen_width, screen_height, &slot))
+            {
+                if (SDL_GetModState() & SDL_KMOD_SHIFT)
+                {
+                    if (inventory_selection->selected_aux_inventory == 1)
+                    {
+                        inventory_selection->selected_aux_item = slot + 16; // Offset for seeds
+                    }
+                    else if (inventory_selection->selected_aux_inventory == 2)
+                    {
+                        inventory_selection->selected_aux_item = slot + 32; // Offset for harvested products
+                    }
+                }
+                else
+                {
+                    inventory_selection->selected_main_item = slot;
+                    if (inventory_selection->selected_main_item == 3) // Seed pouch
+                    {
+                        inventory_selection->selected_aux_inventory = 1;
+                    }
+                    else if (inventory_selection->selected_main_item == 4)
+                    {
+                        inventory_selection->selected_aux_inventory = 2;
+                    }
+                    else
+                    {
+                        inventory_selection->selected_aux_inventory = 0;
+                    }
+                }
+            }
+            else
+            {
+                if (inventory_selection->selected_main_item < 3) // Tool action
+                {
+                    character->equipped_tool = (ToolType)inventory_selection->selected_main_item;
+                    handle_tool_action(character->equipped_tool, grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+                }
+                else // Planting action
+                {
+                    handle_crop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+                }
+            }
+        }
+    }
+}
+
+/*
+ * Debug információ megjelenítése.
+ * @param renderer rajzoló mutatója
+ * @param character karakter mutatója
+ * @param inventory_selection inventárválasztó mutatója
+ * @param grid rács mutatója
+ * @param foreground_grid előtér rács mutatója
+ * @param crop_manager növénykezelő mutatója
+ * @param screen_width képernyő szélesség
+ * @param screen_height képernyő magasság
+ * @return void
+ * @note A karakter pozícióját, nézési irányát, csempéjét, előtér csempéjét, növénykezelő adatait, képernyő szélességét és magasságát jeleníti meg.
+ */
+void render_debug_info(SDL_Renderer *renderer, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, int screen_width, int screen_height)
+{
+    SDL_Color white = {255, 255, 255, 255};
+    char debug_text[512];
+    snprintf(debug_text, sizeof(debug_text),
+             "X: %d "
+             "Y: %d "
+             "Tile X: %d "
+             "Tile Y: %d "
+             "Look X: %d "
+             "Look Y: %d "
+             "Look Tile X: %d "
+             "Look Tile Y: %d "
+             "Direction: %d "
+             "Is Walking: %d "
+             "Equipped Tool: %d "
+             "Selected Main Item: %d "
+             "Selected Aux Item: %d "
+             "Selected Aux Inventory: %d",
+             character->x, character->y, character->tile_x, character->tile_y,
+             character->look_x, character->look_y, character->look_tile_x, character->look_tile_y,
+             character->anim_ctrl.direction, character->anim_ctrl.is_walking,
+             character->equipped_tool, inventory_selection->selected_main_item,
+             inventory_selection->selected_aux_item, inventory_selection->selected_aux_inventory);
+    render_text(renderer, debug_text, white, screen_width - 1410, 50, 1400, 30);
+
+    TileType target_tile_type = get_tile_type(grid, character->look_tile_x, character->look_tile_y);
+    const char *target_tile_type_name = get_tile_type_name(target_tile_type);
+    char tile_type_text[256];
+    snprintf(tile_type_text, sizeof(tile_type_text), "Target Tile Type: %d (%s)", target_tile_type, target_tile_type_name);
+    render_text(renderer, tile_type_text, white, screen_width - 1410, 90, 1400, 30);
+
+    for (int i = 0; i < crop_manager->crop_count; i++)
+    {
+        Crop *crop = &crop_manager->crops[i];
+        if (crop->x == character->look_tile_x && crop->y == character->look_tile_y)
+        {
+            char target_crop_info[256];
+            snprintf(target_crop_info, sizeof(target_crop_info), "Targeted Crop: Type %d, Stage %d, Time %d/%d",
+                     crop->type, crop->growth_stage, crop->current_time, crop->growth_time);
+            render_text(renderer, target_crop_info, white, screen_width - 1410, 170, 1400, 30);
+        }
+    }
+
+    int fg_tile_type = foreground_grid->foreground_layer[character->look_tile_x][character->look_tile_y];
+    char fg_tile_info[256];
+    snprintf(fg_tile_info, sizeof(fg_tile_info), "Foreground Tile Type: %d", fg_tile_type);
+    render_text(renderer, fg_tile_info, white, screen_width - 1410, 210, 1400, 30);
+
+    char fg_grid_state[256];
+    snprintf(fg_grid_state, sizeof(fg_grid_state), "Foreground Grid State at (%d, %d): %d", character->look_tile_x, character->look_tile_y, fg_tile_type);
+    render_text(renderer, fg_grid_state, white, screen_width - 1410, 250, 1400, 30);
+
+    if (inventory_selection->selected_aux_inventory == 1) // Seed pouch
+    {
+        int seed_index = inventory_selection->selected_aux_item - 16;
+        SeedType selected_seed_type = inventory_selection->seed_types[seed_index];
+        const char *seed_type_name;
+        switch (selected_seed_type)
+        {
+        case SEED_PARSNIP:
+            seed_type_name = "Parsnip";
+            break;
+        case SEED_CAULIFLOWER:
+            seed_type_name = "Cauliflower";
+            break;
+        case SEED_COFFEE:
+            seed_type_name = "Coffee";
+            break;
+        case SEED_GREEN_BEAN:
+            seed_type_name = "Green Bean";
+            break;
+        case SEED_HOPS:
+            seed_type_name = "Hops";
+            break;
+        case SEED_POTATO:
+            seed_type_name = "Potato";
+            break;
+        case SEED_STRAWBERRY:
+            seed_type_name = "Strawberry";
+            break;
+        case SEED_MELON:
+            seed_type_name = "Melon";
+            break;
+        case SEED_STARFRUIT:
+            seed_type_name = "Starfruit";
+            break;
+        default:
+            seed_type_name = "Unknown";
+            break;
+        }
+        char seed_type_text[256];
+        snprintf(seed_type_text, sizeof(seed_type_text), "Selected Seed Type: %s, ID: %d", seed_type_name, seed_index);
+        render_text(renderer, seed_type_text, white, screen_width - 1410, 290, 1400, 30);
+    }
+}
+
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
 {
     SDL_Event event;
-    int quit = 0;
+    bool quit = false;
     int zoom_level = 1;
     const int tilemap_width = 16;
     const int tilemap_height = tilemap_width;
@@ -150,205 +509,17 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             {
             case SDL_EVENT_QUIT:
                 SDL_Log("Kilepes: SDL3 event");
-                quit = 1;
+                quit = true;
                 break;
             case SDL_EVENT_KEY_DOWN:
-                if (event.key.key == SDLK_ESCAPE)
-                {
-                    SDL_Log("Kilepes: SDL3 ESC gomb");
-                    quit = 1;
-                    save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
-                    save_grid_state("../src/grid_state.txt", grid);
-                    save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
-                    save_crop_state("../src/crop_state.txt", &crop_manager);                         // Save the current state of the crops
-                    update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
-                }
-                else if (event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
-                {
-                    if (SDL_GetModState() & SDL_KMOD_SHIFT)
-                    {
-                        if (inventory_selection.selected_aux_inventory == 1) // Seed pouch
-                        {
-                            inventory_selection.selected_aux_item = 16 + (event.key.key - SDLK_1);
-                        }
-                        else if (inventory_selection.selected_aux_inventory == 2) // Harvest bag
-                        {
-                            inventory_selection.selected_aux_item = 32 + (event.key.key - SDLK_1);
-                        }
-                    }
-                    else
-                    {
-                        inventory_selection.selected_main_item = event.key.key - SDLK_1;
-                        if (inventory_selection.selected_main_item >= INVENTORY_SIZE)
-                        {
-                            inventory_selection.selected_main_item = INVENTORY_SIZE - 1;
-                        }
-                        if (inventory_selection.selected_main_item < 3) // Update equipped tool based on selected item
-                        {
-                            character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
-                        }
-                        if (inventory_selection.selected_main_item == 3) // Seed pouch
-                        {
-                            inventory_selection.selected_aux_inventory = 1;
-                            inventory_selection.selected_aux_item = 16; // Reset to first seed slot
-                        }
-                        else if (inventory_selection.selected_main_item == 4) // Harvest bag
-                        {
-                            inventory_selection.selected_aux_inventory = 2;
-                            inventory_selection.selected_aux_item = 32; // Reset to first harvest slot
-                        }
-                        else
-                        {
-                            inventory_selection.selected_aux_inventory = 0;
-                        }
-                    }
-                }
-                else if (event.key.key == SDLK_C)
-                {
-                    if (inventory_selection.selected_main_item < 3) // Tool action
-                    {
-                        handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
-                    }
-                    else // Planting action
-                    {
-                        handle_crop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
-                    }
-                }
-                else if (event.key.key == SDLK_X)
-                {
-                    if (inventory_selection.selected_main_item == 3 || inventory_selection.selected_main_item == 4) // Shop action
-                    {
-                        handle_shop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &inventory_selection);
-                    }
-                }
-                else if (event.key.key == SDLK_L)
-                {
-                    toggle_collision_data("../src/collisions.txt", grid, character.tile_x, character.tile_y);
-                    read_collision_data("../src/collisions.txt", grid); // Read collision data again
-                }
-                else if (event.key.key == SDLK_F2)
-                {
-                    show_debug_info = !show_debug_info; // Toggle debug info
-                }
+                handle_key_down(&event, &character, &inventory_selection, grid, foreground_grid, &crop_manager, &quit, &show_debug_info);
                 break;
-
             case SDL_EVENT_MOUSE_WHEEL:
-                if (SDL_GetModState() & SDL_KMOD_SHIFT)
-                {
-                    if (inventory_selection.selected_aux_inventory == 1) // Seed pouch
-                    {
-                        inventory_selection.selected_aux_item = 16 + (inventory_selection.selected_aux_item - 16 + (event.wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
-                    }
-                    else if (inventory_selection.selected_aux_inventory == 2) // Harvest bag
-                    {
-                        inventory_selection.selected_aux_item = 32 + (inventory_selection.selected_aux_item - 32 + (event.wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
-                    }
-                }
-                else
-                {
-                    if (event.wheel.y > 0) // Scroll up
-                    {
-                        inventory_selection.selected_main_item = (inventory_selection.selected_main_item - 1 + INVENTORY_SIZE) % INVENTORY_SIZE;
-                    }
-                    else if (event.wheel.y < 0) // Scroll down
-                    {
-                        inventory_selection.selected_main_item = (inventory_selection.selected_main_item + 1) % INVENTORY_SIZE;
-                    }
-                    if (inventory_selection.selected_main_item == 3) // Seed pouch
-                    {
-                        inventory_selection.selected_aux_inventory = 1;
-                    }
-                    else if (inventory_selection.selected_main_item == 4) // Harvest bag
-                    {
-                        inventory_selection.selected_aux_inventory = 2;
-                    }
-                    else
-                    {
-                        inventory_selection.selected_aux_inventory = 0;
-                    }
-                }
+                handle_mouse_wheel(&event, &inventory_selection);
                 break;
-
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                if (event.button.button == SDL_BUTTON_LEFT)
-                {
-                    int x = event.button.x;
-                    int y = event.button.y;
-                    int slot;
-                    bool button_clicked = false;
-
-                    if (is_button_clicked(BUTTON_ZOOM_IN, x, y))
-                    {
-                        if (zoom_level < 4)
-                        {
-                            zoom_level += 1;
-                            button_clicked = true;
-                        }
-                    }
-                    else if (is_button_clicked(BUTTON_ZOOM_OUT, x, y))
-                    {
-                        if (zoom_level > 1)
-                        {
-                            zoom_level -= 1;
-                            button_clicked = true;
-                        }
-                    }
-                    else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
-                    {
-                        save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
-                        save_grid_state("../src/grid_state.txt", grid);
-                        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
-                        save_crop_state("../src/crop_state.txt", &crop_manager);                         // Save the current state of the crops
-                        update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
-                        button_clicked = true;
-                    }
-
-                    if (!button_clicked)
-                    {
-                        if (is_inventory_slot_clicked(x, y, screen_width, screen_height, &slot))
-                        {
-                            if (SDL_GetModState() & SDL_KMOD_SHIFT)
-                            {
-                                if (inventory_selection.selected_aux_inventory == 1)
-                                {
-                                    inventory_selection.selected_aux_item = slot + 16; // Offset for seeds
-                                }
-                                else if (inventory_selection.selected_aux_inventory == 2)
-                                {
-                                    inventory_selection.selected_aux_item = slot + 32; // Offset for harvested products
-                                }
-                            }
-                            else
-                            {
-                                inventory_selection.selected_main_item = slot;
-                                if (inventory_selection.selected_main_item == 3) // Seed pouch
-                                {
-                                    inventory_selection.selected_aux_inventory = 1;
-                                }
-                                else if (inventory_selection.selected_main_item == 4)
-                                {
-                                    inventory_selection.selected_aux_inventory = 2;
-                                }
-                                else
-                                {
-                                    inventory_selection.selected_aux_inventory = 0;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (inventory_selection.selected_main_item < 3) // Tool action
-                            {
-                                character.equipped_tool = (ToolType)inventory_selection.selected_main_item;
-                                handle_tool_action(character.equipped_tool, grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
-                            }
-                            else // Planting action
-                            {
-                                handle_crop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
-                            }
-                        }
-                    }
-                }
+                handle_mouse_button_down(&event, &character, &inventory_selection, grid, foreground_grid, &crop_manager, screen_width, screen_height, &zoom_level);
+                break;
             }
         }
 
@@ -422,104 +593,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
         if (show_debug_info) // Render debug info if flag is set
         {
-            char debug_text[512];
-            snprintf(debug_text, sizeof(debug_text),
-                     "X: %d "
-                     "Y: %d "
-                     "Tile X: %d "
-                     "Tile Y: %d "
-                     "Look X: %d "
-                     "Look Y: %d "
-                     "Look Tile X: %d "
-                     "Look Tile Y: %d "
-                     "Direction: %d "
-                     "Is Walking: %d "
-                     "Equipped Tool: %d "
-                     "Selected Main Item: %d "
-                     "Selected Aux Item: %d "
-                     "Selected Aux Inventory: %d",
-                     character.x, character.y, character.tile_x, character.tile_y,
-                     character.look_x, character.look_y, character.look_tile_x, character.look_tile_y,
-                     character.anim_ctrl.direction, character.anim_ctrl.is_walking,
-                     character.equipped_tool, inventory_selection.selected_main_item,
-                     inventory_selection.selected_aux_item, inventory_selection.selected_aux_inventory);
-            render_text(renderer, debug_text, white, screen_width - 1410, 50, 1400, 30); // Render debug info below FPS
-
-            // Render tile type info
-            TileType target_tile_type = get_tile_type(grid, character.look_tile_x, character.look_tile_y);
-            const char *target_tile_type_name = get_tile_type_name(target_tile_type);
-            char tile_type_text[256];
-            snprintf(tile_type_text, sizeof(tile_type_text), "Target Tile Type: %d (%s)", target_tile_type, target_tile_type_name);
-            render_text(renderer, tile_type_text, white, screen_width - 1410, 90, 1400, 30); // Render tile type info below debug info
-
-            // Render targeted tile crop info
-            for (int i = 0; i < crop_manager.crop_count; i++)
-            {
-                Crop *crop = &crop_manager.crops[i];
-                if (crop->x == character.look_tile_x && crop->y == character.look_tile_y)
-                {
-                    char target_crop_info[256];
-                    snprintf(target_crop_info, sizeof(target_crop_info), "Targeted Crop: Type %d, Stage %d, Time %d/%d",
-                             crop->type, crop->growth_stage, crop->current_time, crop->growth_time);
-                    render_text(renderer, target_crop_info, white, screen_width - 1410, 170, 1400, 30); // Render targeted crop info below other debug info
-                }
-            }
-
-            // Render targeted tile foreground grid info
-            int fg_tile_type = foreground_grid->foreground_layer[character.look_tile_x][character.look_tile_y];
-            char fg_tile_info[256];
-            snprintf(fg_tile_info, sizeof(fg_tile_info), "Foreground Tile Type: %d", fg_tile_type);
-            render_text(renderer, fg_tile_info, white, screen_width - 1410, 210, 1400, 30); // Render foreground grid info below targeted crop info
-
-            // Render entire foreground grid state
-            char fg_grid_state[256];
-            snprintf(fg_grid_state, sizeof(fg_grid_state), "Foreground Grid State at (%d, %d): %d", character.look_tile_x, character.look_tile_y, fg_tile_type);
-            render_text(renderer, fg_grid_state, white, screen_width - 1410, 250, 1400, 30); // Render foreground grid state below foreground grid info
-
-            // Render selected seed type info
-            if (inventory_selection.selected_aux_inventory == 1) // Seed pouch
-            {
-                int seed_index = inventory_selection.selected_aux_item - 16;
-                SeedType selected_seed_type = inventory_selection.seed_types[seed_index];
-                const char *seed_type_name;
-                switch (selected_seed_type)
-                {
-                case SEED_PARSNIP:
-                    seed_type_name = "Parsnip";
-                    break;
-                case SEED_CAULIFLOWER:
-                    seed_type_name = "Cauliflower";
-                    break;
-                case SEED_COFFEE:
-                    seed_type_name = "Coffee";
-                    break;
-                case SEED_GREEN_BEAN:
-                    seed_type_name = "Green Bean";
-                    break;
-                case SEED_HOPS:
-                    seed_type_name = "Hops";
-                    break;
-                case SEED_POTATO:
-                    seed_type_name = "Potato";
-                    break;
-                case SEED_STRAWBERRY:
-                    seed_type_name = "Strawberry";
-                    break;
-                case SEED_MELON:
-                    seed_type_name = "Melon";
-                    break;
-                case SEED_STARFRUIT:
-                    seed_type_name = "Starfruit";
-                    break;
-                // Add more cases for additional seed types
-                default:
-                    seed_type_name = "Unknown";
-                    break;
-                }
-                char seed_type_text[256];
-                snprintf(seed_type_text, sizeof(seed_type_text), "Selected Seed Type: %s, ID: %d", seed_type_name, seed_index);
-                render_text(renderer, seed_type_text, white, screen_width - 1410, 290, 1400, 30); // Render selected seed type info below foreground grid state
-            }
+            render_debug_info(renderer, &character, &inventory_selection, grid, foreground_grid, &crop_manager, screen_width, screen_height);
         }
 
         SDL_RenderPresent(renderer);
