@@ -6,6 +6,8 @@
 
 #define INVENTORY_SIZE 9
 #define TILE_SIZE 16
+#define MAX_ITEMS 256      // Define maximum items per category
+#define MAX_ITEM_COUNT 256 // Define maximum items per slot
 
 typedef enum
 {

@@ -113,16 +113,10 @@ void handle_harvest_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int 
             bool added_to_inventory = false;
             for (int j = 0; j < INVENTORY_SIZE; j++)
             {
-                if (inventory_selection->harvest_counts[j] == 0)
-                {
-                    inventory_selection->harvest_counts[j] = 1;
-                    inventory_selection->seed_types[j] = (SeedType)crop->type;
-                    added_to_inventory = true;
-                    break;
-                }
-                else if (inventory_selection->seed_types[j] == (SeedType)crop->type)
+                if (inventory_selection->harvest_counts[j] < MAX_ITEM_COUNT)
                 {
                     inventory_selection->harvest_counts[j]++;
+                    inventory_selection->seed_types[j] = (SeedType)crop->type;
                     added_to_inventory = true;
                     break;
                 }

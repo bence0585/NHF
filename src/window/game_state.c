@@ -14,17 +14,17 @@ void save_game_state(const char *filename, int character_x, int character_y, Inv
     fprintf(file, "%d %d\n", character_x, character_y);
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%d ", inventory_selection->seed_counts[i]);
+        fprintf(file, "%03d ", inventory_selection->seed_counts[i]); // Use %03d to ensure 3-digit formatting
     }
     fprintf(file, "\n");
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%d ", inventory_selection->harvest_counts[i]);
+        fprintf(file, "%03d ", inventory_selection->harvest_counts[i]); // Use %03d to ensure 3-digit formatting
     }
     fprintf(file, "\n");
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%d ", inventory_selection->seed_types[i]);
+        fprintf(file, "%03d ", inventory_selection->seed_types[i]); // Use %03d to ensure 3-digit formatting
     }
     fprintf(file, "\n%d\n", inventory_selection->total_seeds); // Save total_seeds with newline
     fclose(file);
@@ -51,15 +51,15 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
     fscanf(file, "%d %d", character_x, character_y);
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%d", &inventory_selection->seed_counts[i]);
+        fscanf(file, "%03d", &inventory_selection->seed_counts[i]); // Use %03d to ensure 3-digit formatting
     }
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%d", &inventory_selection->harvest_counts[i]);
+        fscanf(file, "%03d", &inventory_selection->harvest_counts[i]); // Use %03d to ensure 3-digit formatting
     }
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%d", (int *)&inventory_selection->seed_types[i]);
+        fscanf(file, "%03d", (int *)&inventory_selection->seed_types[i]); // Use %03d to ensure 3-digit formatting
     }
     fscanf(file, "%d\n", &inventory_selection->total_seeds); // Load total_seeds with newline
     fclose(file);
