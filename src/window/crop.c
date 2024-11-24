@@ -16,12 +16,14 @@ void add_crop(CropManager *crop_manager, int x, int y, CropType type, int growth
     crop_manager->crops[crop_manager->crop_count - 1] = (Crop){x, y, type, CROP_PHASE_1, growth_time, 0};
 }
 
-void update_crops(CropManager *crop_manager, int ticks)
+void update_crops(CropManager *crop_manager, int ticks, Grid *grid)
 {
     for (int i = 0; i < crop_manager->crop_count; i++)
     {
         Crop *crop = &crop_manager->crops[i];
-        if (rand() % 100 < 80) // 80% chance to count the tick towards growth
+        int growth_chance = (get_tile_type(grid, crop->x, crop->y) == TILE_WATERED) ? 80 : 30; // 80% if watered, 30% if not
+
+        if (rand() % 100 < growth_chance) // Chance to count the tick towards growth
         {
             crop->current_time += ticks;
             if (crop->current_time >= crop->growth_time && crop->growth_stage < crop_info[crop->type].growth_stages - 1)

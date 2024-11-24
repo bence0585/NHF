@@ -80,8 +80,8 @@ void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int gri
         if ((get_tile_type(grid, grid_x, grid_y) == TILE_HOE || get_tile_type(grid, grid_x, grid_y) == TILE_WATERED) &&
             fg_grid->foreground_layer[grid_x][grid_y] == 0) // Check if the foreground is clear
         {
-            add_crop(crop_manager, grid_x, grid_y, crop_type, 1); // Example growth time
-            inventory_selection->seed_counts[seed_index]--;       // Decrement the seed count in memory
+            add_crop(crop_manager, grid_x, grid_y, crop_type, 10); // Example growth time
+            inventory_selection->seed_counts[seed_index]--;        // Decrement the seed count in memory
             SDL_Log("Seed planted. New seed count: %d", inventory_selection->seed_counts[seed_index]);
 
             // Update the foreground grid state with the crop type

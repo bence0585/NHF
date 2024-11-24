@@ -47,9 +47,9 @@ void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
-void game_tick(CropManager *crop_manager, int ticks)
+void game_tick(CropManager *crop_manager, int ticks, Grid *grid)
 {
-    update_crops(crop_manager, ticks);
+    update_crops(crop_manager, ticks, grid);
 }
 
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
@@ -118,7 +118,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             fps = frame_count;
             frame_count = 0;
             start_time = frame_start;
-            game_tick(&crop_manager, 1); // Advance the game by one tick every second
+            game_tick(&crop_manager, 1, grid); // Advance the game by one tick every second
         }
 
         SDL_PumpEvents();
