@@ -258,6 +258,7 @@ ForegroundGrid *create_foreground_grid(int width, int height);
 void destroy_foreground_grid(ForegroundGrid *grid);
 void render_foreground_grid(SDL_Renderer *renderer, SDL_Texture *tilemap, ForegroundGrid *grid, int tilemap_width, int tilemap_height, double zoom_level, int offset_x, int offset_y);
 void read_foreground_grid_state(const char *filename, ForegroundGrid *grid); // Add this declaration
+void clear_foreground_grid(ForegroundGrid *grid);
 
 // Movement
 void handle_movement(const bool *state, int *character_x, int *character_y, AnimationController *anim_ctrl, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height);
@@ -270,5 +271,21 @@ void update_look_tile(Character *character, int tile_size);
 
 void handle_seed_harvest_selection(int *selected_item, int inventory_size, int offset);
 void handle_aux_selection(int *selected_aux_item, int inventory_size, int offset);
+
+static const int background_collision_tiles[] = {
+    0x89,
+    // Add more background collision tiles here
+};
+
+static const int foreground_collision_tiles[] = {
+    0xE8, // Replace 0xXX with actual hex code
+    0xE9, // Add more foreground collision tiles here
+    0xD8, // Replace 0xXX with actual hex code
+    0xD9, // Add more foreground collision tiles here
+
+    // Add more foreground collision tiles here
+};
+
+void update_collision_data(const char *filename, Grid *grid, ForegroundGrid *fg_grid);
 
 #endif // WINDOW_H

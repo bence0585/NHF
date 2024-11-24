@@ -106,6 +106,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
     bool show_debug_info = false; // Add a flag to toggle debug info
 
+    read_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Read the saved state of the foreground grid
+
     while (!quit)
     {
         Uint32 frame_start = SDL_GetTicks();
@@ -140,7 +142,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     quit = 1;
                     save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
                     save_grid_state("../src/grid_state.txt", grid);
-                    save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid);
+                    save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
+                    update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
                 }
                 else if (event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
                 {
@@ -269,7 +272,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     {
                         save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
                         save_grid_state("../src/grid_state.txt", grid);
-                        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save changes to the foreground grid state file
+                        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
+                        update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
                         button_clicked = true;
                     }
 

@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
     read_grid_state("../src/grid_state.txt", background_grid);
     read_collision_data("../src/collisions.txt", background_grid); // Read collision data
-    read_foreground_grid_state("../src/foregrid_state.txt", foreground_grid);
+    read_foreground_grid_state("../src/foreground_grid_state", foreground_grid);
 
     SDL_Log("SDL3 init");
 

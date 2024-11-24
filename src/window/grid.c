@@ -410,3 +410,58 @@ void save_foreground_grid_state(const char *filename, ForegroundGrid *grid)
 
     fclose(file);
 }
+
+void clear_foreground_grid(ForegroundGrid *grid)
+{
+    for (int i = 0; i < grid->width; i++)
+    {
+        for (int j = 0; j < grid->height; j++)
+        {
+            grid->foreground_layer[i][j] = 0;
+        }
+    }
+}
+
+void update_collision_data(const char *filename, Grid *grid, ForegroundGrid *fg_grid)
+{
+    FILE *file = fopen(filename, "w");
+    if (file == NULL)
+    {
+        SDL_Log("Failed to open collision data file for writing: %s", strerror(errno));
+        return;
+    }
+
+    for (int i = 0; i < grid->height; i++)
+    {
+        for (int j = 0; j < grid->width; j++)
+        {
+            bool collision = false;
+
+            // Check background grid for collision tiles
+            for (int k = 0; k < sizeof(background_collision_tiles) / sizeof(int); k++)
+            {
+                if (grid->physical_layer[j][i] == background_collision_tiles[k])
+                {
+                    collision = true;
+                    break;
+                }
+            }
+
+            // Check foreground grid for collision tiles
+            for (int k = 0; k < sizeof(foreground_collision_tiles) / sizeof(int); k++)
+            {
+                if (fg_grid->foreground_layer[j][i] == foreground_collision_tiles[k])
+                {
+                    collision = true;
+                    break;
+                }
+            }
+
+            fprintf(file, "%02X ", collision ? 0xFF : 0x00);
+        }
+        fprintf(file, "\n");
+    }
+
+    fclose(file);
+    SDL_Log("Updated collision data in %s", filename); // Log the update action
+}
