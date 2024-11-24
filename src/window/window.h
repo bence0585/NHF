@@ -239,6 +239,8 @@ void initialize_crop_manager(CropManager *crop_manager);
 void add_crop(CropManager *crop_manager, int x, int y, CropType type, int growth_time);
 void update_crops(CropManager *crop_manager, int ticks);
 void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager *crop_manager, int tile_size, double zoom_level, int offset_x, int offset_y);
+void save_crop_state(const char *filename, CropManager *crop_manager);
+void load_crop_state(const char *filename, CropManager *crop_manager);
 
 // Tick system
 void game_tick(CropManager *crop_manager, int ticks);

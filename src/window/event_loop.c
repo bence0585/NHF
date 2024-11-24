@@ -92,6 +92,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
     CropManager crop_manager;
     initialize_crop_manager(&crop_manager);
+    load_crop_state("../src/crop_state.txt", &crop_manager); // Load the saved state of the crops
 
     Uint32 start_time = SDL_GetTicks();
     int frame_count = 0;
@@ -143,6 +144,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
                     save_grid_state("../src/grid_state.txt", grid);
                     save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
+                    save_crop_state("../src/crop_state.txt", &crop_manager);                         // Save the current state of the crops
                     update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
                 }
                 else if (event.key.key >= SDLK_1 && event.key.key <= SDLK_9)
@@ -273,6 +275,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                         save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
                         save_grid_state("../src/grid_state.txt", grid);
                         save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
+                        save_crop_state("../src/crop_state.txt", &crop_manager);                         // Save the current state of the crops
                         update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
                         button_clicked = true;
                     }
