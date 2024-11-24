@@ -1,5 +1,6 @@
 #include "window.h"
 #include <SDL3_ttf/SDL_ttf.h>
+#include "../debugmalloc.h"
 
 /*
  * Inicializálja az SDL-t videó és események kezelésére.

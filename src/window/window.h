@@ -3,6 +3,7 @@
 
 #include <SDL3/SDL.h>
 #include <stdbool.h>
+#include "../debugmalloc.h"
 
 #define INVENTORY_SIZE 9
 static const int TILE_SIZE = 16;

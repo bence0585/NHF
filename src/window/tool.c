@@ -1,5 +1,6 @@
 #include "window.h"
 #include <stdlib.h> // stdlib.h a realloc-hoz
+#include "../debugmalloc.h"
 
 /*
  * Kezeli az eszköz műveleteket a megadott rács koordinátákon.

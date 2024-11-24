@@ -1,6 +1,7 @@
 #include "window.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../debugmalloc.h"
 
 /*
  * Létrehoz egy rácsot a megadott szélességgel és magassággal.
@@ -59,8 +60,11 @@ Grid *create_grid(int width, int height)
 void destroy_grid(Grid *grid)
 {
     if (grid == NULL)
+    {
+        SDL_Log("Grid is already NULL");
         return;
-
+    }
+    SDL_Log("Destroying grid with width: %d, height: %d", grid->width, grid->height);
     for (int i = 0; i < grid->width; i++)
     {
         free(grid->physical_layer[i]);
@@ -71,6 +75,7 @@ void destroy_grid(Grid *grid)
     free(grid->optical_layer);   // Free memory for optical layer
     free(grid->collision_layer); // Free memory for collision layer
     free(grid);
+    SDL_Log("Grid destroyed");
 }
 
 /*
@@ -368,11 +373,23 @@ void update_tile_texture(Grid *grid, int grid_x, int grid_y)
 ForegroundGrid *create_foreground_grid(int width, int height)
 {
     ForegroundGrid *grid = (ForegroundGrid *)malloc(sizeof(ForegroundGrid));
+    if (grid == NULL)
+    {
+        SDL_Log("Failed to allocate memory for foreground grid.");
+        return NULL;
+    }
     grid->width = width;
     grid->height = height;
 
     grid->background_layer = (int **)malloc(width * sizeof(int *));
     grid->foreground_layer = (int **)malloc(width * sizeof(int *));
+    if (grid->background_layer == NULL || grid->foreground_layer == NULL)
+    {
+        SDL_Log("Failed to allocate memory for foreground grid layers.");
+        free(grid);
+        return NULL;
+    }
+
     for (int i = 0; i < width; i++)
     {
         grid->background_layer[i] = (int *)malloc(height * sizeof(int));
@@ -385,6 +402,7 @@ ForegroundGrid *create_foreground_grid(int width, int height)
         }
     }
 
+    SDL_Log("Created foreground grid with width: %d, height: %d", width, height);
     return grid;
 }
 /*
@@ -395,6 +413,12 @@ ForegroundGrid *create_foreground_grid(int width, int height)
  */
 void destroy_foreground_grid(ForegroundGrid *grid)
 {
+    if (grid == NULL)
+    {
+        SDL_Log("Foreground grid is already NULL");
+        return;
+    }
+    SDL_Log("Destroying foreground grid with width: %d, height: %d", grid->width, grid->height);
     for (int i = 0; i < grid->width; i++)
     {
         free(grid->background_layer[i]);
@@ -403,6 +427,7 @@ void destroy_foreground_grid(ForegroundGrid *grid)
     free(grid->background_layer);
     free(grid->foreground_layer);
     free(grid);
+    SDL_Log("Foreground grid destroyed");
 }
 /*
  * A háttér fölé kirajzolt réteg kirajzolása a megadott rajzolóra a megadott csempetérképpel.

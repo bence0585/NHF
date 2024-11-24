@@ -1,5 +1,5 @@
 #include "window.h"
-
+#include "../debugmalloc.h"
 /*
  * Inicializálja a karaktert a megadott kezdőpozícióval.
  * A karakter alapértelmezett eszköze a kapa.
@@ -46,9 +46,15 @@ void update_character_tile(Character *character, int tile_size)
  */
 void handle_character_movement(const bool *state, Character *character, Grid *grid, int movement_speed, int tile_size, int character_tile_width, int character_tile_height)
 {
+
     character->anim_ctrl.is_walking = false;
     int new_x = character->x;
     int new_y = character->y;
+
+    if (grid == NULL || grid->collision_layer == NULL)
+    {
+        return;
+    }
 
     if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP])
     {
@@ -187,6 +193,7 @@ void handle_key_down(SDL_Event *event, Character *character, InventorySelection 
         save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Elmenti az előtér rács állapotát (Az előtér tárolja a növényeket, boltot, és minden olyat ami a háttér előtt van)
         save_crop_state("../src/crop_state.txt", crop_manager);                          // Elmenti a növények állapotát
         update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Frissíti az ütközési adatokat
+        SDL_Log("Game state saved and quitting");
     }
     else if (event->key.key >= SDLK_1 && event->key.key <= SDLK_9)
     {

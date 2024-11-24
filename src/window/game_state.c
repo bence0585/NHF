@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h> // Tartalmazza a stdlib.h-t a malloc-hoz
+#include "../debugmalloc.h"
 
 /*
  * Mentési fájl létrehozása és a játékállapot mentése.

@@ -2,7 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include "window/window.h"
-
+#include "debugmalloc.h"
 /*
  * A program belépési pontja
  * @param argc argumentumok száma
@@ -40,11 +40,23 @@ int main(int argc, char *argv[])
     determine_grid_size("../src/grid_state.txt", &grid_width, &grid_height);
 
     Grid *background_grid = create_grid(grid_width, grid_height);
+    if (background_grid == NULL)
+    {
+        SDL_Log("Failed to create background grid");
+        return -6;
+    }
+
     ForegroundGrid *foreground_grid = create_foreground_grid(grid_width, grid_height);
+    if (foreground_grid == NULL)
+    {
+        SDL_Log("Failed to create foreground grid");
+        destroy_grid(background_grid);
+        return -7;
+    }
 
     read_grid_state("../src/grid_state.txt", background_grid);     // háttér rács beolvasása
     read_collision_data("../src/collisions.txt", background_grid); // ütközési adatok beolvasása
-    read_foreground_grid_state("../src/foreground_grid_state", foreground_grid);
+    read_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid);
 
     SDL_Log("SDL3 init");
 
@@ -54,8 +66,11 @@ int main(int argc, char *argv[])
     cleanup_font();
     cleanup(renderer, window);
 
+    SDL_Log("Destroying background grid");
     destroy_grid(background_grid);
+    SDL_Log("Destroying foreground grid");
     destroy_foreground_grid(foreground_grid);
 
+    SDL_Log("Exiting main function");
     return 0;
 }

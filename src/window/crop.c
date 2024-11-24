@@ -1,6 +1,7 @@
 #include "window.h"
 #include <stdlib.h>
 #include <time.h>
+#include "../debugmalloc.h"
 
 /*
  * Inicializálja a növénykezelőt. A növények tömbjét NULL-ra állítja, a növények számát pedig 0-ra.

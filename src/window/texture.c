@@ -1,6 +1,7 @@
 #include "window.h"
 #include <SDL3/SDL_surface.h>
 #include <SDL3_Image/SDL_image.h>
+#include "../debugmalloc.h"
 
 /*
  * Betölt egy textúrát a megadott fájlból

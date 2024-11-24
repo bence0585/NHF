@@ -2,6 +2,8 @@
 #include <math.h>
 #include <SDL3/SDL_render.h> // SDL_RenderDrawPoint-hoz
 #include "window.h"
+#include "../debugmalloc.h"
+
 /*
  * Visszaadja a megadott csempe típus nevét.
  * @param tile_type csempe típus
@@ -267,6 +269,7 @@ extern void update_character_position(Character *character, Grid *grid, int grid
 
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
 {
+    SDL_Log("Entering event loop");
     SDL_Event event;
     bool quit = false;
     int zoom_level = 1;
@@ -275,19 +278,56 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
     Character character;
     InventorySelection inventory_selection = {0, 0, 0}; // Inventárválasztó inicializálása
-    Grid *grid;
+    Grid *grid = NULL;
     CropManager crop_manager;
-    int grid_width, grid_height;
+    int grid_width = 0, grid_height = 0;
 
+    SDL_Log("Initializing game");
     initialize_game(renderer, &character, &inventory_selection, &grid, foreground_grid, &crop_manager, &grid_width, &grid_height);
 
+    if (grid == NULL || foreground_grid == NULL)
+    {
+        SDL_Log("Failed to initialize game grids.");
+        return;
+    }
+
+    SDL_Log("Loading textures");
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
+    if (tilemap == NULL)
+    {
+        SDL_Log("Failed to load tilemap texture.");
+        return;
+    }
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
+
     SDL_Texture *character_tileset = load_texture(renderer, "../src/img/playerTilemap.png");
+    if (character_tileset == NULL)
+    {
+        SDL_Log("Failed to load character tileset texture.");
+        SDL_DestroyTexture(tilemap);
+        return;
+    }
     SDL_SetTextureScaleMode(character_tileset, SDL_SCALEMODE_NEAREST);
+
     SDL_Texture *item_tilemap = load_texture(renderer, "../src/img/itemTilemap.png");
+    if (item_tilemap == NULL)
+    {
+        SDL_Log("Failed to load item tilemap texture.");
+        SDL_DestroyTexture(tilemap);
+        SDL_DestroyTexture(character_tileset);
+        return;
+    }
     SDL_SetTextureScaleMode(item_tilemap, SDL_SCALEMODE_NEAREST);
+
     SDL_Texture *crop_texture = load_texture(renderer, "../src/img/cropTilemap.png"); // Növény textúra
+    if (crop_texture == NULL)
+    {
+        SDL_Log("Failed to load crop texture.");
+        SDL_DestroyTexture(tilemap);
+        SDL_DestroyTexture(character_tileset);
+        SDL_DestroyTexture(item_tilemap);
+        return;
+    }
     SDL_SetTextureScaleMode(crop_texture, SDL_SCALEMODE_NEAREST);
 
     Uint32 start_time = SDL_GetTicks();
@@ -295,6 +335,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     int fps = 0;
     bool show_debug_info = false; // Debug információ megjelenítésének kapcsolója
 
+    SDL_Log("Starting main loop");
     /*
         * A játék fő ciklusa.
         * A játékot egy időegységgel előre lépteti minden másodpercben.
@@ -310,6 +351,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             fps = frame_count;
             frame_count = 0;
             start_time = frame_start;
+            // SDL_Log("Game tick");
             game_tick(&crop_manager, 1, grid); // A játékot egy időegységgel előre lépteti minden másodpercben
         }
 
@@ -338,9 +380,14 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
         }
     }
 
-    destroy_grid(grid);
+    SDL_Log("Cleaning up resources");
+    if (grid != NULL)
+    {
+        destroy_grid(grid);
+    }
     SDL_DestroyTexture(character_tileset);
     SDL_DestroyTexture(tilemap);
     SDL_DestroyTexture(item_tilemap);
     SDL_DestroyTexture(crop_texture);
+    SDL_Log("Exiting event loop");
 }

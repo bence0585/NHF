@@ -1,6 +1,7 @@
 #include "window.h"
 #include <stdio.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include "../debugmalloc.h"
 
 static const int inventory_size = 9;
 static const int padding = 4;
