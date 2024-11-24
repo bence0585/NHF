@@ -190,7 +190,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     }
                     else // Planting action
                     {
-                        handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
+                        handle_crop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
                     }
                 }
                 else if (event.key.key == SDLK_L)
@@ -314,7 +314,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                             }
                             else // Planting action
                             {
-                                handle_crop_action((CropType)(inventory_selection.selected_main_item - 3), grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
+                                handle_crop_action(grid, foreground_grid, character.look_tile_x, character.look_tile_y, &crop_manager, &inventory_selection);
                             }
                         }
                     }
@@ -391,7 +391,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
 
         if (show_debug_info) // Render debug info if flag is set
         {
-            char debug_text[256];
+            char debug_text[512];
             snprintf(debug_text, sizeof(debug_text),
                      "X: %d "
                      "Y: %d "
@@ -428,8 +428,8 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                 if (crop->x == character.look_tile_x && crop->y == character.look_tile_y)
                 {
                     char target_crop_info[256];
-                    snprintf(target_crop_info, sizeof(target_crop_info), "Targeted Crop: Stage %d, Time %d/%d",
-                             crop->growth_stage, crop->current_time, crop->growth_time);
+                    snprintf(target_crop_info, sizeof(target_crop_info), "Targeted Crop: Type %d, Stage %d, Time %d/%d",
+                             crop->type, crop->growth_stage, crop->current_time, crop->growth_time);
                     render_text(renderer, target_crop_info, white, screen_width - 1410, 170, 1400, 30); // Render targeted crop info below other debug info
                 }
             }
@@ -444,6 +444,51 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             char fg_grid_state[256];
             snprintf(fg_grid_state, sizeof(fg_grid_state), "Foreground Grid State at (%d, %d): %d", character.look_tile_x, character.look_tile_y, fg_tile_type);
             render_text(renderer, fg_grid_state, white, screen_width - 1410, 250, 1400, 30); // Render foreground grid state below foreground grid info
+
+            // Render selected seed type info
+            if (inventory_selection.selected_aux_inventory == 1) // Seed pouch
+            {
+                int seed_index = inventory_selection.selected_aux_item - 16;
+                SeedType selected_seed_type = inventory_selection.seed_types[seed_index];
+                const char *seed_type_name;
+                switch (selected_seed_type)
+                {
+                case SEED_PARSNIP:
+                    seed_type_name = "Parsnip";
+                    break;
+                case SEED_CAULIFLOWER:
+                    seed_type_name = "Cauliflower";
+                    break;
+                case SEED_COFFEE:
+                    seed_type_name = "Coffee";
+                    break;
+                case SEED_GREEN_BEAN:
+                    seed_type_name = "Green Bean";
+                    break;
+                case SEED_HOPS:
+                    seed_type_name = "Hops";
+                    break;
+                case SEED_POTATO:
+                    seed_type_name = "Potato";
+                    break;
+                case SEED_STRAWBERRY:
+                    seed_type_name = "Strawberry";
+                    break;
+                case SEED_MELON:
+                    seed_type_name = "Melon";
+                    break;
+                case SEED_STARFRUIT:
+                    seed_type_name = "Starfruit";
+                    break;
+                // Add more cases for additional seed types
+                default:
+                    seed_type_name = "Unknown";
+                    break;
+                }
+                char seed_type_text[256];
+                snprintf(seed_type_text, sizeof(seed_type_text), "Selected Seed Type: %s, ID: %d", seed_type_name, seed_index);
+                render_text(renderer, seed_type_text, white, screen_width - 1410, 290, 1400, 30); // Render selected seed type info below foreground grid state
+            }
         }
 
         SDL_RenderPresent(renderer);

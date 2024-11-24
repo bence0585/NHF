@@ -22,6 +22,11 @@ void save_game_state(const char *filename, int character_x, int character_y, Inv
         fprintf(file, "%d ", inventory_selection->harvest_counts[i]);
     }
     fprintf(file, "\n");
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        fprintf(file, "%d ", inventory_selection->seed_types[i]);
+    }
+    fprintf(file, "\n%d\n", inventory_selection->total_seeds); // Save total_seeds with newline
     fclose(file);
 }
 
@@ -37,7 +42,9 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
         {
             inventory_selection->seed_counts[i] = 0;
             inventory_selection->harvest_counts[i] = 0;
+            inventory_selection->seed_types[i] = (SeedType)i; // Initialize seed types from 0 to 8
         }
+        inventory_selection->total_seeds = 0; // Initialize total_seeds
         save_game_state(filename, *character_x, *character_y, inventory_selection);
         return;
     }
@@ -50,5 +57,10 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
     {
         fscanf(file, "%d", &inventory_selection->harvest_counts[i]);
     }
+    for (int i = 0; i < INVENTORY_SIZE; i++)
+    {
+        fscanf(file, "%d", (int *)&inventory_selection->seed_types[i]);
+    }
+    fscanf(file, "%d\n", &inventory_selection->total_seeds); // Load total_seeds with newline
     fclose(file);
 }

@@ -30,10 +30,49 @@ void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int 
     }
 }
 
-void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection)
+void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection)
 {
-    int seed_index = inventory_selection->selected_aux_item - 16; // Calculate the index for the seed type
-    SDL_Log("Attempting to plant seed of type %d at (%d, %d)", crop, grid_x, grid_y);
+    int seed_index = inventory_selection->selected_aux_item - 16;     // Calculate the index for the seed type
+    SeedType seed_type = inventory_selection->seed_types[seed_index]; // Get the seed type
+    CropType crop_type;
+
+    // Map seed type to crop type
+    switch (seed_type)
+    {
+    case SEED_PARSNIP:
+        crop_type = CROP_PARSNIP;
+        break;
+    case SEED_CAULIFLOWER:
+        crop_type = CROP_CAULIFLOWER;
+        break;
+    case SEED_COFFEE:
+        crop_type = CROP_COFFEE;
+        break;
+    case SEED_GREEN_BEAN:
+        crop_type = CROP_GREEN_BEAN;
+        break;
+    case SEED_HOPS:
+        crop_type = CROP_HOPS;
+        break;
+    case SEED_POTATO:
+        crop_type = CROP_POTATO;
+        break;
+    case SEED_STRAWBERRY:
+        crop_type = CROP_STRAWBERRY;
+        break;
+    case SEED_MELON:
+        crop_type = CROP_MELON;
+        break;
+    case SEED_STARFRUIT:
+        crop_type = CROP_STARFRUIT;
+        break;
+    // Add more cases for additional seed types
+    default:
+        SDL_Log("Unknown seed type: %d", seed_type);
+        return;
+    }
+
+    SDL_Log("Attempting to plant seed of type %d at (%d, %d)", crop_type, grid_x, grid_y);
 
     if (inventory_selection->seed_counts[seed_index] > 0) // Check if there are seeds available
     {
@@ -42,12 +81,12 @@ void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int 
         if ((get_tile_type(grid, grid_x, grid_y) == TILE_HOE || get_tile_type(grid, grid_x, grid_y) == TILE_WATERED) &&
             fg_grid->foreground_layer[grid_x][grid_y] == 0) // Check if the foreground is clear
         {
-            add_crop(crop_manager, grid_x, grid_y, crop, 10); // Example growth time
-            inventory_selection->seed_counts[seed_index]--;   // Decrement the seed count in memory
+            add_crop(crop_manager, grid_x, grid_y, crop_type, 10); // Example growth time
+            inventory_selection->seed_counts[seed_index]--;        // Decrement the seed count in memory
             SDL_Log("Seed planted. New seed count: %d", inventory_selection->seed_counts[seed_index]);
 
             // Update the foreground grid state with the crop type
-            fg_grid->foreground_layer[grid_x][grid_y] = crop_info[crop].texture_start;
+            fg_grid->foreground_layer[grid_x][grid_y] = crop_info[crop_type].texture_start;
 
             // Do not save the foreground grid state to the file here
         }

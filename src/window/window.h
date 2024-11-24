@@ -66,13 +66,29 @@ typedef struct
     AnimationController anim_ctrl;
 } Character;
 
+typedef enum
+{
+    SEED_PARSNIP,
+    SEED_CAULIFLOWER,
+    SEED_COFFEE,
+    SEED_GREEN_BEAN,
+    SEED_HOPS,
+    SEED_POTATO,
+    SEED_STRAWBERRY,
+    SEED_MELON,
+    SEED_STARFRUIT,
+    // Add more seed types here
+} SeedType;
+
 typedef struct
 {
     int selected_main_item;
     int selected_aux_item;
-    int selected_aux_inventory;         // 0 for none, 1 for seed pouch, 2 for harvest bag
-    int seed_counts[INVENTORY_SIZE];    // Counts for seeds
-    int harvest_counts[INVENTORY_SIZE]; // Counts for harvests
+    int selected_aux_inventory;          // 0 for none, 1 for seed pouch, 2 for harvest bag
+    int seed_counts[INVENTORY_SIZE];     // Counts for seeds
+    int harvest_counts[INVENTORY_SIZE];  // Counts for harvests
+    SeedType seed_types[INVENTORY_SIZE]; // Types of seeds
+    int total_seeds;                     // Add total_seeds field
 } InventorySelection;
 
 // Inicializálás
@@ -157,14 +173,15 @@ TileType get_tile_type(Grid *grid, int grid_x, int grid_y);
 
 typedef enum
 {
-    CROP_SEED_1,
-    CROP_SEED_2,
-    CROP_SEED_3,
-    CROP_PRODUCT_1,
-    CROP_PRODUCT_2,
-    CROP_PRODUCT_3,
-    CROP_PARSNIP, // Add Parsnip crop type
-    CROP_CABBAGE, // Add Cabbage crop type
+    CROP_PARSNIP,
+    CROP_CAULIFLOWER,
+    CROP_COFFEE,
+    CROP_GREEN_BEAN,
+    CROP_HOPS,
+    CROP_POTATO,
+    CROP_STRAWBERRY,
+    CROP_MELON,
+    CROP_STARFRUIT,
     // Add more crop types here
 } CropType;
 
@@ -178,7 +195,14 @@ typedef struct
 
 static const CropInfo crop_info[] = {
     {CROP_PARSNIP, "Parsnip", 6, 0x10},
-    {CROP_CABBAGE, "Cabbage", 7, 0x30},
+    {CROP_CAULIFLOWER, "Cauliflower", 7, 0x30},
+    {CROP_COFFEE, "Coffee", 7, 0x90},
+    {CROP_GREEN_BEAN, "Green Bean", 7, 0x18},
+    {CROP_HOPS, "Hops", 7, 0x58},
+    {CROP_POTATO, "Potato", 7, 0x38},
+    {CROP_STRAWBERRY, "Strawberry", 7, 0x50},
+    {CROP_MELON, "Melon", 7, 0x78},
+    {CROP_STARFRUIT, "Starfruit", 7, 0x70},
     // Add more crop info here
 };
 
@@ -219,7 +243,7 @@ void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager
 void game_tick(CropManager *crop_manager, int ticks);
 
 void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager);
-void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection);
+void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection);
 
 // Takarítás
 void cleanup(SDL_Renderer *renderer, SDL_Window *window);
