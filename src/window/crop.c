@@ -1,21 +1,42 @@
 #include "window.h"
 #include <stdlib.h>
 #include <time.h>
+/*
+    * Inicializálja a növénykezelőt. A növények tömbjét NULL-ra állítja, a növények számát pedig 0-ra.
+    * @param crop_manager növénykezelő mutatója
+    * @return void
 
+*/
 void initialize_crop_manager(CropManager *crop_manager)
 {
     crop_manager->crops = NULL;
     crop_manager->crop_count = 0;
     srand(time(NULL)); // Initialize random seed
 }
-
+/*
+ * Hozzáad egy növényt a növénykezelőhöz. A növények tömbjének méretét növeli, és hozzáadja a növényt a tömbhöz.
+ * @param crop_manager növénykezelő mutatója
+ * @param x x koordináta
+ * @param y y koordináta
+ * @param type növény típusa
+ * @param growth_time növekedési idő.
+ * @return void
+ */
 void add_crop(CropManager *crop_manager, int x, int y, CropType type, int growth_time)
 {
     crop_manager->crop_count++;
     crop_manager->crops = realloc(crop_manager->crops, crop_manager->crop_count * sizeof(Crop));
     crop_manager->crops[crop_manager->crop_count - 1] = (Crop){x, y, type, CROP_PHASE_1, growth_time, 0};
 }
+/*
 
+    * Frissíti a növények állapotát a megadott időegységek alapján. A növények növekedési esélye a víz állapotától függ.
+    * @param crop_manager növénykezelő mutatója
+    * @param ticks időegységek száma
+    * @param grid rács mutatója
+    * @return void
+    * @note A növények növekedési esélye 80%, ha öntözött, 30%, ha nem öntözött.
+*/
 void update_crops(CropManager *crop_manager, int ticks, Grid *grid)
 {
     for (int i = 0; i < crop_manager->crop_count; i++)
@@ -38,7 +59,18 @@ void update_crops(CropManager *crop_manager, int ticks, Grid *grid)
         }
     }
 }
-
+/*
+ * Rendereli a növényeket a megadott paraméterek alapján.
+ * @param renderer rajzoló mutatója
+ * @param crop_texture növény textúra
+ * @param crop_manager növénykezelő mutatója
+ * @param tile_size csempe mérete
+ * @param zoom_level nagyítási szint
+ * @param offset_x x eltolás
+ * @param offset_y y eltolás
+ * @return void
+ * @note A növények mindig 2 magasak.
+ */
 void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager *crop_manager, int tile_size, double zoom_level, int offset_x, int offset_y)
 {
     for (int i = 0; i < crop_manager->crop_count; i++)

@@ -2,8 +2,11 @@
 #include <math.h>
 #include <SDL3/SDL_render.h> // Include the correct header for SDL_RenderDrawPoint
 #include "window.h"
-
-// Function to get the name of the tile type
+/*
+ * Visszaadja a megadott csempe típus nevét.
+ * @param tile_type csempe típus
+ * @return csempe típus neve
+ */
 const char *get_tile_type_name(TileType tile_type)
 {
     switch (tile_type)
@@ -14,18 +17,20 @@ const char *get_tile_type_name(TileType tile_type)
         return "TILE_HOE";
     case TILE_WATERED:
         return "TILE_WATERED";
-    case TILE_CROP_1:
-        return "TILE_CROP_1";
-    case TILE_CROP_2:
-        return "TILE_CROP_2";
-    case TILE_CROP_3:
-        return "TILE_CROP_3";
-    // Add more tile types here
     default:
         return "UNKNOWN";
     }
 }
 
+/*
+ * Árnyékot rajzol a megadott pozícióra adott sugárral.
+ * @param renderer rajzoló mutatója
+ * @param x x koordináta
+ * @param y y koordináta
+ * @param radius sugár
+ * @return void
+ * @note Az árnyék színe félig átlátszó fekete.
+ */
 void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
 {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -47,11 +52,22 @@ void render_shadow(SDL_Renderer *renderer, int x, int y, int radius)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
+/*
+ * Tick rendszer frissítése a játékban.
+ * @param crop_manager növénykezelő mutatója
+ * @param ticks időegységek száma
+ * @param grid rács mutatója
+ * @return void
+ * @note A játékot egy időegységgel előre lépteti minden másodpercben.
+ */
 void game_tick(CropManager *crop_manager, int ticks, Grid *grid)
 {
     update_crops(crop_manager, ticks, grid);
 }
 
+/*
+
+*/
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
 {
     SDL_Event event;
