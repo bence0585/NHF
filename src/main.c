@@ -3,6 +3,12 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include "window/window.h"
 
+/*
+ * A program belépési pontja
+ * @param argc argumentumok száma
+ * @param argv argumentumok tömbje
+ * @return 0, ha sikeres, egyébként negatív szám
+ */
 int main(int argc, char *argv[])
 {
     if (initialize_SDL() < 0)
@@ -36,8 +42,8 @@ int main(int argc, char *argv[])
     Grid *background_grid = create_grid(grid_width, grid_height);
     ForegroundGrid *foreground_grid = create_foreground_grid(grid_width, grid_height);
 
-    read_grid_state("../src/grid_state.txt", background_grid);
-    read_collision_data("../src/collisions.txt", background_grid); // Read collision data
+    read_grid_state("../src/grid_state.txt", background_grid);     // háttér rács beolvasása
+    read_collision_data("../src/collisions.txt", background_grid); // ütközési adatok beolvasása
     read_foreground_grid_state("../src/foreground_grid_state", foreground_grid);
 
     SDL_Log("SDL3 init");

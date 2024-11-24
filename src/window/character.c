@@ -1,4 +1,5 @@
 #include "window.h"
+
 /*
  * Inicializálja a karaktert a megadott kezdőpozícióval.
  * A karakter alapértelmezett eszköze a kapa.
@@ -12,11 +13,12 @@ void initialize_character(Character *character, int start_x, int start_y)
 {
     character->x = start_x;
     character->y = start_y;
-    character->equipped_tool = TOOL_HOE;                                                 // Default tool
-    character->anim_ctrl = (AnimationController){0, 6, 10, 0, 1, DIRECTION_DOWN, false}; // Initialize animation controller
+    character->equipped_tool = TOOL_HOE;                                                 // Alapértelmezett eszköz
+    character->anim_ctrl = (AnimationController){0, 6, 10, 0, 1, DIRECTION_DOWN, false}; // Animációvezérlő inicializálása
     update_character_tile(character, TILE_SIZE);
     calculate_look_coordinates(character, TILE_SIZE);
 }
+
 /*
  * Frissíti a karakter csempe koordinátáit a karakter x és y pozíciója alapján.
  * @param character karakter mutatója
@@ -27,6 +29,7 @@ void update_character_tile(Character *character, int tile_size)
 {
     convert_to_grid_coordinates(character->x, character->y + tile_size / 2, tile_size, &character->tile_x, &character->tile_y);
 }
+
 /*
  * Kezeli a karakter mozgását a megadott állapotok alapján.
  * A karakter mozgási sebessége a movement_speed paraméterrel állítható.
@@ -72,7 +75,7 @@ void handle_character_movement(const bool *state, Character *character, Grid *gr
         character->anim_ctrl.is_walking = true;
     }
 
-    // Ensure the character cannot exit the grid
+    // Biztosítja, hogy a karakter ne hagyja el a rácsot
     if (new_x < 0)
         new_x = 0;
     if (new_y < 0)
@@ -82,7 +85,7 @@ void handle_character_movement(const bool *state, Character *character, Grid *gr
     if (new_y > (grid->height * tile_size - character_tile_height))
         new_y = grid->height * tile_size - character_tile_height;
 
-    // Check for collisions
+    // Ütközések ellenőrzése
     int grid_x, grid_y;
     convert_to_grid_coordinates(new_x + character_tile_width / 2, new_y + character_tile_height / 2, tile_size, &grid_x, &grid_y);
     if (grid_x >= 0 && grid_x < grid->width && grid_y >= 0 && grid_y < grid->height)
@@ -93,14 +96,14 @@ void handle_character_movement(const bool *state, Character *character, Grid *gr
             character->y = new_y;
             update_character_tile(character, tile_size);
             calculate_look_coordinates(character, tile_size);
-            // SDL_Log("Player moved to tile (%d, %d)", grid_x, grid_y);
         }
         else
         {
-            SDL_Log("Attempted to move to forbidden tile (%d, %d)", grid_x, grid_y);
+            SDL_Log("Megkísérelt lépés a tiltott csempére (%d, %d)", grid_x, grid_y);
         }
     }
 }
+
 /*
  * Kiszámítja a karakter nézési koordinátáit. A karakter nézési iránya alapján.
  * @param character karakter mutatója
@@ -128,6 +131,7 @@ void calculate_look_coordinates(Character *character, int tile_size)
     }
     update_look_tile(character, tile_size);
 }
+
 /*
  * Frissíti a karakter nézési csempéjét a karakter nézési koordinátái alapján.
  * @param character karakter mutatója
@@ -138,6 +142,7 @@ void update_look_tile(Character *character, int tile_size)
 {
     convert_to_grid_coordinates(character->look_x, character->look_y + tile_size / 2, tile_size, &character->look_tile_x, &character->look_tile_y);
 }
+
 /*
  * Frissíti az animációt az animációvezérlő alapján.
  * Az animációvezérlő frame_delay_counter értékét növeli.
@@ -163,10 +168,10 @@ void update_animation(AnimationController *anim_ctrl)
 
     if (anim_ctrl->is_walking)
     {
-        anim_ctrl->frame = anim_ctrl->max_frames + (anim_ctrl->frame + 1) % 3; // Walking frames
+        anim_ctrl->frame = anim_ctrl->max_frames + (anim_ctrl->frame + 1) % 3; // Mozgási frame-ek
         return;
     }
 
-    // Idle animation: 0-0-0-0
+    // Álló animáció: 0-0-0-0
     anim_ctrl->frame = 0;
 }

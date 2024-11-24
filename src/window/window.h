@@ -5,16 +5,13 @@
 #include <stdbool.h>
 
 #define INVENTORY_SIZE 9
-#define TILE_SIZE 16
-#define MAX_ITEMS 256      // Define maximum items per category
-#define MAX_ITEM_COUNT 256 // Define maximum items per slot
+static const int TILE_SIZE = 16;
 
 typedef enum
 {
     TOOL_HOE,
     TOOL_WATERING_CAN,
     TOOL_SICKLE,
-    // Add more tools here
 } ToolType;
 
 typedef struct
@@ -23,7 +20,7 @@ typedef struct
     int height;
     int **physical_layer;
     int **optical_layer;
-    bool **collision_layer; // Add collision layer
+    bool **collision_layer;
 } Grid;
 
 typedef struct
@@ -34,7 +31,7 @@ typedef struct
     int **foreground_layer;
 } ForegroundGrid;
 
-// Animation types
+// Animációk típusai
 typedef enum
 {
     DIRECTION_DOWN,
@@ -49,7 +46,7 @@ typedef struct
     int max_frames;
     int frame_delay;
     int frame_delay_counter;
-    int frame_direction; // New property for idle animation direction
+    int frame_direction;
     Direction direction;
     bool is_walking;
 } AnimationController;
@@ -168,7 +165,6 @@ typedef enum
     BUTTON_ZOOM_IN,
     BUTTON_ZOOM_OUT,
     BUTTON_SAVE_GAME,
-    // Add more buttons here
 } ButtonType;
 
 void render_button(SDL_Renderer *renderer, ButtonType button);
@@ -194,7 +190,6 @@ typedef enum
 {
     TOOL_ACTION_HOE,
     TOOL_ACTION_WATER,
-    // Add more tool actions here
 } ToolAction;
 
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);

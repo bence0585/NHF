@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include <SDL3/SDL_render.h> // Include the correct header for SDL_RenderDrawPoint
+#include <SDL3/SDL_render.h> // Tartalmazza a megfelelő fejlécet az SDL_RenderDrawPoint-hoz
 #include "window.h"
 /*
  * Visszaadja a megadott csempe típus nevét.
@@ -95,19 +95,19 @@ void handle_key_down(SDL_Event *event, Character *character, InventorySelection 
         *quit = true;
         save_game_state("../src/save_state.txt", character->x, character->y, inventory_selection);
         save_grid_state("../src/grid_state.txt", grid);
-        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
-        save_crop_state("../src/crop_state.txt", crop_manager);                          // Save the current state of the crops
-        update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
+        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Elmenti az előtér rács állapotát (Az előtér tárolja a növényeket, boltot, és minden olyat ami a háttér előtt van)
+        save_crop_state("../src/crop_state.txt", crop_manager);                          // Elmenti a növények állapotát
+        update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Frissíti az ütközési adatokat
     }
     else if (event->key.key >= SDLK_1 && event->key.key <= SDLK_9)
     {
         if (SDL_GetModState() & SDL_KMOD_SHIFT)
         {
-            if (inventory_selection->selected_aux_inventory == 1) // Seed pouch
+            if (inventory_selection->selected_aux_inventory == 1) // Magtár
             {
                 inventory_selection->selected_aux_item = 16 + (event->key.key - SDLK_1);
             }
-            else if (inventory_selection->selected_aux_inventory == 2) // Harvest bag
+            else if (inventory_selection->selected_aux_inventory == 2) // Betakarított terménytár
             {
                 inventory_selection->selected_aux_item = 32 + (event->key.key - SDLK_1);
             }
@@ -119,52 +119,52 @@ void handle_key_down(SDL_Event *event, Character *character, InventorySelection 
             {
                 inventory_selection->selected_main_item = INVENTORY_SIZE - 1;
             }
-            if (inventory_selection->selected_main_item < 3) // Update equipped tool based on selected item
+            if (inventory_selection->selected_main_item < 3) // Eszköz
             {
                 character->equipped_tool = (ToolType)inventory_selection->selected_main_item;
             }
-            if (inventory_selection->selected_main_item == 3) // Seed pouch
+            if (inventory_selection->selected_main_item == 3) // magtár
             {
                 inventory_selection->selected_aux_inventory = 1;
-                inventory_selection->selected_aux_item = 16; // Reset to first seed slot
+                inventory_selection->selected_aux_item = 16; // Magtár első helyére állít
             }
-            else if (inventory_selection->selected_main_item == 4) // Harvest bag
+            else if (inventory_selection->selected_main_item == 4) // Betakarított terménytár
             {
                 inventory_selection->selected_aux_inventory = 2;
-                inventory_selection->selected_aux_item = 32; // Reset to first harvest slot
+                inventory_selection->selected_aux_item = 32; // Betakarított terménytár első helyére állít
             }
             else
             {
-                inventory_selection->selected_aux_inventory = 0;
+                inventory_selection->selected_aux_inventory = 0; // Nincs aux tároló
             }
         }
     }
     else if (event->key.key == SDLK_C)
     {
-        if (inventory_selection->selected_main_item < 3) // Tool action
+        if (inventory_selection->selected_main_item < 3) // eszköz művelet
         {
             handle_tool_action(character->equipped_tool, grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
         }
-        else // Planting action
+        else // ültetés, betakarítás
         {
             handle_crop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
         }
     }
     else if (event->key.key == SDLK_X)
     {
-        if (inventory_selection->selected_main_item == 3 || inventory_selection->selected_main_item == 4) // Shop action
+        if (inventory_selection->selected_main_item == 3 || inventory_selection->selected_main_item == 4) // Bolt művelet
         {
             handle_shop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, inventory_selection);
         }
     }
-    else if (event->key.key == SDLK_L)
+    else if (event->key.key == SDLK_L) // Ütközési adatok módosítása (debug)
     {
         toggle_collision_data("../src/collisions.txt", grid, character->tile_x, character->tile_y);
-        read_collision_data("../src/collisions.txt", grid); // Read collision data again
+        read_collision_data("../src/collisions.txt", grid); // Olvassa be az ütközési adatokat
     }
     else if (event->key.key == SDLK_F2)
     {
-        *show_debug_info = !*show_debug_info; // Toggle debug info
+        *show_debug_info = !*show_debug_info; // Debug információk megjelenítése
     }
 }
 
@@ -184,30 +184,30 @@ void handle_mouse_wheel(SDL_Event *event, InventorySelection *inventory_selectio
 {
     if (SDL_GetModState() & SDL_KMOD_SHIFT)
     {
-        if (inventory_selection->selected_aux_inventory == 1) // Seed pouch
+        if (inventory_selection->selected_aux_inventory == 1) // magtár
         {
             inventory_selection->selected_aux_item = 16 + (inventory_selection->selected_aux_item - 16 + (event->wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
         }
-        else if (inventory_selection->selected_aux_inventory == 2) // Harvest bag
+        else if (inventory_selection->selected_aux_inventory == 2) // betakarított terménytár
         {
             inventory_selection->selected_aux_item = 32 + (inventory_selection->selected_aux_item - 32 + (event->wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
         }
     }
     else
     {
-        if (event->wheel.y > 0) // Scroll up
+        if (event->wheel.y > 0) // Felgörget
         {
             inventory_selection->selected_main_item = (inventory_selection->selected_main_item - 1 + INVENTORY_SIZE) % INVENTORY_SIZE;
         }
-        else if (event->wheel.y < 0) // Scroll down
+        else if (event->wheel.y < 0) // legörget
         {
             inventory_selection->selected_main_item = (inventory_selection->selected_main_item + 1) % INVENTORY_SIZE;
         }
-        if (inventory_selection->selected_main_item == 3) // Seed pouch
+        if (inventory_selection->selected_main_item == 3) // magtár
         {
             inventory_selection->selected_aux_inventory = 1;
         }
-        else if (inventory_selection->selected_main_item == 4) // Harvest bag
+        else if (inventory_selection->selected_main_item == 4) // betakarított terménytár
         {
             inventory_selection->selected_aux_inventory = 2;
         }
@@ -263,9 +263,9 @@ void handle_mouse_button_down(SDL_Event *event, Character *character, InventoryS
         {
             save_game_state("../src/save_state.txt", character->x, character->y, inventory_selection);
             save_grid_state("../src/grid_state.txt", grid);
-            save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save the current state of the foreground grid
-            save_crop_state("../src/crop_state.txt", crop_manager);                          // Save the current state of the crops
-            update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Update collision data
+            save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Elmenti az előtér rács állapotát (Az előtér tárolja a növényeket, boltot, és minden olyat ami a háttér előtt van)
+            save_crop_state("../src/crop_state.txt", crop_manager);                          // Elmenti a növények állapotát
+            update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Frissíti az ütközési adatokat
             button_clicked = true;
         }
 
@@ -277,17 +277,17 @@ void handle_mouse_button_down(SDL_Event *event, Character *character, InventoryS
                 {
                     if (inventory_selection->selected_aux_inventory == 1)
                     {
-                        inventory_selection->selected_aux_item = slot + 16; // Offset for seeds
+                        inventory_selection->selected_aux_item = slot + 16; // Magok offsetje, mivel a magtár 16-tól kezdődik a karakterládában
                     }
                     else if (inventory_selection->selected_aux_inventory == 2)
                     {
-                        inventory_selection->selected_aux_item = slot + 32; // Offset for harvested products
+                        inventory_selection->selected_aux_item = slot + 32; // Betakarított termények offsetje, mivel a betakarított terménytár 32-től kezdődik a karakterládában
                     }
                 }
                 else
                 {
                     inventory_selection->selected_main_item = slot;
-                    if (inventory_selection->selected_main_item == 3) // Seed pouch
+                    if (inventory_selection->selected_main_item == 3)
                     {
                         inventory_selection->selected_aux_inventory = 1;
                     }
@@ -303,12 +303,12 @@ void handle_mouse_button_down(SDL_Event *event, Character *character, InventoryS
             }
             else
             {
-                if (inventory_selection->selected_main_item < 3) // Tool action
+                if (inventory_selection->selected_main_item < 3) // eszköz művelet
                 {
                     character->equipped_tool = (ToolType)inventory_selection->selected_main_item;
                     handle_tool_action(character->equipped_tool, grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
                 }
-                else // Planting action
+                else // ültetés
                 {
                     handle_crop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
                 }
@@ -383,7 +383,7 @@ void render_debug_info(SDL_Renderer *renderer, Character *character, InventorySe
     snprintf(fg_grid_state, sizeof(fg_grid_state), "Foreground Grid State at (%d, %d): %d", character->look_tile_x, character->look_tile_y, fg_tile_type);
     render_text(renderer, fg_grid_state, white, screen_width - 1410, 250, 1400, 30);
 
-    if (inventory_selection->selected_aux_inventory == 1) // Seed pouch
+    if (inventory_selection->selected_aux_inventory == 1) // magtár
     {
         int seed_index = inventory_selection->selected_aux_item - 16;
         SeedType selected_seed_type = inventory_selection->seed_types[seed_index];
@@ -426,24 +426,155 @@ void render_debug_info(SDL_Renderer *renderer, Character *character, InventorySe
         render_text(renderer, seed_type_text, white, screen_width - 1410, 290, 1400, 30);
     }
 }
+/*
+ * Játék inicializálása.
+ * @param renderer rajzoló mutatója
+ * @param character karakter mutatója
+ * @param inventory_selection inventárválasztó mutatója
+ * @param grid rács mutatója
+ * @param foreground_grid előtér rács mutatója
+ * @param crop_manager növénykezelő mutatója
+ * @param grid_width rács szélessége
+ * @param grid_height rács magassága
+ * @return void
+ */
+void initialize_game(SDL_Renderer *renderer, Character *character, InventorySelection *inventory_selection, Grid **grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, int *grid_width, int *grid_height)
+{
+    initialize_character(character, 0, 0);                                                       // Inicializálja a karaktert a (0, 0) pozícióval (ez felül lesz írva a mentett játékállapotból)
+    load_game_state("../src/save_state.txt", &character->x, &character->y, inventory_selection); // Betölti a játékállapotot
+    update_character_tile(character, TILE_SIZE);                                                 // Frissíti a karakter csempéjét
+
+    determine_grid_size("../src/grid_state.txt", grid_width, grid_height); // Meghatározza a rács méretét
+    *grid = create_grid(*grid_width, *grid_height);                        // Létrehozza a rácsot
+    read_grid_state("../src/grid_state.txt", *grid);                       // Beolvassa a rács állapotát
+    read_collision_data("../src/collisions.txt", *grid);                   // Beolvassa az ütközési adatokat
+
+    if (*grid == NULL)
+    {
+        SDL_Log("Failed to read grid state.");
+        return;
+    }
+
+    initialize_crop_manager(crop_manager);                                           // Inicializálja a növénykezelőt
+    load_crop_state("../src/crop_state.txt", crop_manager);                          // Betölti a növények állapotát
+    read_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Beolvassa az előtér rács állapotát
+}
+
+/*
+
+*/
+void render_game(SDL_Renderer *renderer, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, SDL_Texture *tilemap, SDL_Texture *character_tileset, SDL_Texture *item_tilemap, SDL_Texture *crop_texture, int screen_width, int screen_height, int zoom_level, int fps, bool show_debug_info)
+{
+    int tilemap_width = TILE_SIZE;
+    int tilemap_height = TILE_SIZE;
+    int character_tile_width = TILE_SIZE;
+    int character_tile_height = TILE_SIZE * 2;
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    int offset_x = screen_width / 2 - character->x * zoom_level - (tilemap_width * zoom_level) / 2;
+    int offset_y = screen_height / 2 - character->y * zoom_level - (tilemap_height * zoom_level) / 2;
+
+    render_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
+    render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
+    render_crops(renderer, crop_texture, crop_manager, tilemap_width, zoom_level, offset_x, offset_y); // Render crops before character and UI
+
+    highlight_grid_square(renderer, character->tile_x, character->tile_y, tilemap_width, zoom_level, offset_x, offset_y);
+    highlight_look_square(renderer, character->look_tile_x, character->look_tile_y, tilemap_width, zoom_level, offset_x, offset_y);
+
+    // Render the shadow under the character
+    int shadow_radius = (character_tile_width / 3) * zoom_level;
+    int shadow_x = (screen_width / 2 - (character_tile_width * zoom_level) / 2);
+    int shadow_y = screen_height / 2 + (character_tile_height / 2) * zoom_level - (9 * zoom_level);
+    render_shadow(renderer, shadow_x, shadow_y, shadow_radius);
+
+    // Adjust the character's rendering position
+    SDL_FRect character_rect = {
+        (float)(screen_width / 2 - (character_tile_width * zoom_level)),
+        (float)(screen_height / 2 - (character_tile_height * zoom_level) + (8 * zoom_level)),
+        (float)(character_tile_width * zoom_level),
+        (float)(character_tile_height * zoom_level)};
+
+    // Calculate the source rectangle for the character animation
+    int src_x = character->anim_ctrl.frame * character_tile_width;
+    int src_y = character->anim_ctrl.direction * character_tile_height;
+    SDL_FRect character_src_rect = {src_x, src_y, character_tile_width, character_tile_height};
+
+    // Render the character from the tileset
+    SDL_RenderTexture(renderer, character_tileset, &character_src_rect, &character_rect);
+
+    render_button(renderer, BUTTON_ZOOM_IN);
+    render_button(renderer, BUTTON_ZOOM_OUT);
+    // render_button(renderer, BUTTON_SAVE_GAME); // Commented out
+
+    render_ui(renderer, item_tilemap, inventory_selection, screen_width, screen_height); // Render UI after character
+
+    SDL_Color white = {255, 255, 255, 255};
+    char fps_text[10];
+    snprintf(fps_text, sizeof(fps_text), "FPS: %d", fps);
+    render_text(renderer, fps_text, white, screen_width - 110, 10, 100, 30); // Move FPS text to top right
+
+    if (show_debug_info) // Render debug info if flag is set
+    {
+        render_debug_info(renderer, character, inventory_selection, grid, foreground_grid, crop_manager, screen_width, screen_height);
+    }
+
+    SDL_RenderPresent(renderer);
+}
+
+void handle_events(SDL_Event *event, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, bool *quit, bool *show_debug_info, int screen_width, int screen_height, int *zoom_level)
+{
+    // Események kezelése
+    while (SDL_PollEvent(event))
+    {
+        switch (event->type)
+        {
+        case SDL_EVENT_QUIT:
+            SDL_Log("Kilepes: SDL3 event");
+            *quit = true;
+            break;
+        case SDL_EVENT_KEY_DOWN:
+            handle_key_down(event, character, inventory_selection, grid, foreground_grid, crop_manager, quit, show_debug_info);
+            break;
+        case SDL_EVENT_MOUSE_WHEEL:
+            handle_mouse_wheel(event, inventory_selection);
+            break;
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            handle_mouse_button_down(event, character, inventory_selection, grid, foreground_grid, crop_manager, screen_width, screen_height, zoom_level);
+            break;
+        }
+    }
+}
+
+void update_character_position(Character *character, Grid *grid, int grid_width, int grid_height, int tile_size, int character_tile_width, int character_tile_height)
+{
+    // Biztosítja, hogy a karakter ne hagyja el a rácsot
+    if (character->x < 0)
+        character->x = 0;
+    if (character->y < 0)
+        character->y = 0;
+    if (character->x > (grid_width * tile_size - character_tile_width))
+        character->x = grid_width * tile_size - character_tile_width;
+    if (character->y > (grid_height * tile_size - character_tile_height))
+        character->y = grid_height * tile_size - character_tile_height;
+}
 
 void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *foreground_grid)
 {
     SDL_Event event;
     bool quit = false;
     int zoom_level = 1;
-    const int tilemap_width = 16;
-    const int tilemap_height = tilemap_width;
-    const int character_tile_width = tilemap_width;
-    const int character_tile_height = tilemap_width * 2;
-    int tile_size = tilemap_width;
+    int screen_width, screen_height;
+    SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
 
     Character character;
-    initialize_character(&character, 0, 0); // Initialize character at top-left tile
+    InventorySelection inventory_selection = {0, 0, 0}; // Inventárválasztó inicializálása
+    Grid *grid;
+    CropManager crop_manager;
+    int grid_width, grid_height;
 
-    InventorySelection inventory_selection = {0, 0, 0}; // Initialize inventory selection
-    load_game_state("../src/save_state.txt", &character.x, &character.y, &inventory_selection);
-    update_character_tile(&character, tilemap_width);
+    initialize_game(renderer, &character, &inventory_selection, &grid, foreground_grid, &crop_manager, &grid_width, &grid_height);
 
     SDL_Texture *tilemap = load_texture(renderer, "../src/img/tilemap.png");
     SDL_SetTextureScaleMode(tilemap, SDL_SCALEMODE_NEAREST);
@@ -451,38 +582,13 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
     SDL_SetTextureScaleMode(character_tileset, SDL_SCALEMODE_NEAREST);
     SDL_Texture *item_tilemap = load_texture(renderer, "../src/img/itemTilemap.png");
     SDL_SetTextureScaleMode(item_tilemap, SDL_SCALEMODE_NEAREST);
-    SDL_Texture *crop_texture = load_texture(renderer, "../src/img/cropTilemap.png"); // Crop texture
+    SDL_Texture *crop_texture = load_texture(renderer, "../src/img/cropTilemap.png"); // Növény textúra
     SDL_SetTextureScaleMode(crop_texture, SDL_SCALEMODE_NEAREST);
-
-    int grid_width, grid_height;
-    determine_grid_size("../src/grid_state.txt", &grid_width, &grid_height);
-    Grid *grid = create_grid(grid_width, grid_height);
-    read_grid_state("../src/grid_state.txt", grid);
-    read_collision_data("../src/collisions.txt", grid); // Read collision data
-    if (grid == NULL)
-    {
-        SDL_Log("Failed to read grid state.");
-        return;
-    }
-
-    CropManager crop_manager;
-    initialize_crop_manager(&crop_manager);
-    load_crop_state("../src/crop_state.txt", &crop_manager); // Load the saved state of the crops
 
     Uint32 start_time = SDL_GetTicks();
     int frame_count = 0;
     int fps = 0;
-
-    static const int movement_speed = 2;
-
-    int screen_width, screen_height;
-    SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
-
-    int grid_x, grid_y; // Declare grid_x and grid_y here
-
-    bool show_debug_info = false; // Add a flag to toggle debug info
-
-    read_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Read the saved state of the foreground grid
+    bool show_debug_info = false; // Debug információ megjelenítésének kapcsolója
 
     while (!quit)
     {
@@ -493,110 +599,26 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             fps = frame_count;
             frame_count = 0;
             start_time = frame_start;
-            game_tick(&crop_manager, 1, grid); // Advance the game by one tick every second
+            game_tick(&crop_manager, 1, grid); // A játékot egy időegységgel előre lépteti minden másodpercben
         }
 
         SDL_PumpEvents();
         const bool *state = SDL_GetKeyboardState(NULL);
 
-        update_character_tile(&character, tilemap_width);
+        update_character_tile(&character, TILE_SIZE);
+        int grid_x, grid_y;
+        convert_to_grid_coordinates(character.x + TILE_SIZE / 2, character.y + TILE_SIZE, TILE_SIZE, &grid_x, &grid_y);
 
-        convert_to_grid_coordinates(character.x + character_tile_width / 2, character.y + character_tile_height / 2, tilemap_width, &grid_x, &grid_y);
+        handle_events(&event, &character, &inventory_selection, grid, foreground_grid, &crop_manager, &quit, &show_debug_info, screen_width, screen_height, &zoom_level);
 
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-            case SDL_EVENT_QUIT:
-                SDL_Log("Kilepes: SDL3 event");
-                quit = true;
-                break;
-            case SDL_EVENT_KEY_DOWN:
-                handle_key_down(&event, &character, &inventory_selection, grid, foreground_grid, &crop_manager, &quit, &show_debug_info);
-                break;
-            case SDL_EVENT_MOUSE_WHEEL:
-                handle_mouse_wheel(&event, &inventory_selection);
-                break;
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                handle_mouse_button_down(&event, &character, &inventory_selection, grid, foreground_grid, &crop_manager, screen_width, screen_height, &zoom_level);
-                break;
-            }
-        }
+        handle_character_movement(state, &character, grid, 2, TILE_SIZE, TILE_SIZE, TILE_SIZE * 2);
+        calculate_look_coordinates(&character, TILE_SIZE); // Biztosítja, hogy a nézési koordináták frissüljenek
 
-        handle_character_movement(state, &character, grid, movement_speed, tile_size, character_tile_width, character_tile_height);
-        calculate_look_coordinates(&character, tile_size); // Ensure look coordinates are updated
-
-        // Ensure the character cannot exit the grid
-        if (character.x < 0)
-            character.x = 0;
-        if (character.y < 0)
-            character.y = 0;
-        if (character.x > (grid_width * tile_size - character_tile_width))
-            character.x = grid_width * tile_size - character_tile_width;
-        if (character.y > (grid_height * tile_size - character_tile_height))
-            character.y = grid_height * tile_size - character_tile_height;
-
-        // Log the new tile position
-        update_character_tile(&character, tile_size);
-        calculate_look_coordinates(&character, tile_size); // Ensure look coordinates are updated
-        // SDL_Log("Player is on tile (%d, %d)", character.tile_x, character.tile_y);
+        update_character_position(&character, grid, grid_width, grid_height, TILE_SIZE, TILE_SIZE, TILE_SIZE * 2);
 
         update_animation(&character.anim_ctrl);
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        SDL_GetCurrentRenderOutputSize(renderer, &screen_width, &screen_height);
-        int offset_x = screen_width / 2 - character.x * zoom_level - (tilemap_width * zoom_level) / 2;
-        int offset_y = screen_height / 2 - character.y * zoom_level - (tilemap_height * zoom_level) / 2;
-
-        render_grid(renderer, tilemap, grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
-
-        render_foreground_grid(renderer, crop_texture, foreground_grid, tilemap_width, tilemap_height, zoom_level, offset_x, offset_y);
-
-        render_crops(renderer, crop_texture, &crop_manager, tilemap_width, zoom_level, offset_x, offset_y); // Render crops before character and UI
-
-        highlight_grid_square(renderer, character.tile_x, character.tile_y, tilemap_width, zoom_level, offset_x, offset_y);
-        highlight_look_square(renderer, character.look_tile_x, character.look_tile_y, tilemap_width, zoom_level, offset_x, offset_y);
-
-        // Render the shadow under the character
-        int shadow_radius = (character_tile_width / 3) * zoom_level;
-        int shadow_x = (screen_width / 2 - (character_tile_width * zoom_level) / 2);
-        int shadow_y = screen_height / 2 + (character_tile_height / 2) * zoom_level - (9 * zoom_level);
-        render_shadow(renderer, shadow_x, shadow_y, shadow_radius);
-
-        // Adjust the character's rendering position
-        SDL_FRect character_rect = {
-            (float)(screen_width / 2 - (character_tile_width * zoom_level)),
-            (float)(screen_height / 2 - (character_tile_height * zoom_level) + (8 * zoom_level)),
-            (float)(character_tile_width * zoom_level),
-            (float)(character_tile_height * zoom_level)};
-
-        // Calculate the source rectangle for the character animation
-        int src_x = character.anim_ctrl.frame * character_tile_width;
-        int src_y = character.anim_ctrl.direction * character_tile_height;
-        SDL_FRect character_src_rect = {src_x, src_y, character_tile_width, character_tile_height};
-
-        // Render the character from the tileset
-        SDL_RenderTexture(renderer, character_tileset, &character_src_rect, &character_rect);
-
-        render_button(renderer, BUTTON_ZOOM_IN);
-        render_button(renderer, BUTTON_ZOOM_OUT);
-        // render_button(renderer, BUTTON_SAVE_GAME); // Commented out
-
-        render_ui(renderer, item_tilemap, &inventory_selection, screen_width, screen_height); // Render UI after character
-
-        SDL_Color white = {255, 255, 255, 255};
-        char fps_text[10];
-        snprintf(fps_text, sizeof(fps_text), "FPS: %d", fps);
-        render_text(renderer, fps_text, white, screen_width - 110, 10, 100, 30); // Move FPS text to top right
-
-        if (show_debug_info) // Render debug info if flag is set
-        {
-            render_debug_info(renderer, &character, &inventory_selection, grid, foreground_grid, &crop_manager, screen_width, screen_height);
-        }
-
-        SDL_RenderPresent(renderer);
+        render_game(renderer, &character, &inventory_selection, grid, foreground_grid, &crop_manager, tilemap, character_tileset, item_tilemap, crop_texture, screen_width, screen_height, zoom_level, fps, show_debug_info);
 
         Uint32 frame_time = SDL_GetTicks() - frame_start;
         if (frame_time < 16)

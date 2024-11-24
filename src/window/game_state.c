@@ -2,33 +2,33 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <stdlib.h> // Include stdlib.h for malloc
+#include <stdlib.h> // Tartalmazza a stdlib.h-t a malloc-hoz
 
 void save_game_state(const char *filename, int character_x, int character_y, InventorySelection *inventory_selection)
 {
     FILE *file = fopen(filename, "w");
     if (file == NULL)
     {
-        SDL_Log("Error opening save file: %s", strerror(errno));
+        SDL_Log("Hiba a mentési fájl megnyitásakor: %s", strerror(errno));
         return;
     }
-    fprintf(file, "%d %d\n", character_x, character_y); // Line 1: character coordinates
+    fprintf(file, "%d %d\n", character_x, character_y); // 1. sor: karakter koordináták
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%03d ", inventory_selection->seed_counts[i]); // Line 2: seed counts
+        fprintf(file, "%03d ", inventory_selection->seed_counts[i]); // 2. sor: magok száma
     }
     fprintf(file, "\n");
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%03d ", inventory_selection->harvest_counts[i]); // Line 3: harvest counts
+        fprintf(file, "%03d ", inventory_selection->harvest_counts[i]); // 3. sor: betakarított termények száma
     }
     fprintf(file, "\n");
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fprintf(file, "%03d ", inventory_selection->seed_types[i]); // Line 4: seed types
+        fprintf(file, "%03d ", inventory_selection->seed_types[i]); // 4. sor: magok típusai
     }
-    fprintf(file, "\n%d\n", inventory_selection->total_seeds); // Line 5: total seeds
-    fprintf(file, "%d\n", inventory_selection->money);         // Line 6: money
+    fprintf(file, "\n%d\n", inventory_selection->total_seeds); // 5. sor: összes mag
+    fprintf(file, "%d\n", inventory_selection->money);         // 6. sor: pénz
     fclose(file);
 }
 
@@ -37,35 +37,35 @@ void load_game_state(const char *filename, int *character_x, int *character_y, I
     FILE *file = fopen(filename, "r");
     if (file == NULL)
     {
-        SDL_Log("Save file not found, creating a new one.");
+        SDL_Log("Mentési fájl nem található, új létrehozása.");
         *character_x = 0;
         *character_y = 0;
         for (int i = 0; i < INVENTORY_SIZE; i++)
         {
             inventory_selection->seed_counts[i] = 0;
             inventory_selection->harvest_counts[i] = 0;
-            inventory_selection->seed_types[i] = (SeedType)i; // Initialize seed types from 0 to 8
+            inventory_selection->seed_types[i] = (SeedType)i; // Mag típusok inicializálása 0-tól 8-ig
         }
-        inventory_selection->total_seeds = 0; // Initialize total_seeds
-        inventory_selection->money = 100;     // Initialize money
+        inventory_selection->total_seeds = 0; // Összes mag inicializálása
+        inventory_selection->money = 100;     // Pénz inicializálása
         save_game_state(filename, *character_x, *character_y, inventory_selection);
         return;
     }
-    fscanf(file, "%d %d", character_x, character_y); // Line 1: character coordinates
+    fscanf(file, "%d %d", character_x, character_y); // 1. sor: karakter koordináták
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%03d", &inventory_selection->seed_counts[i]); // Line 2: seed counts
+        fscanf(file, "%03d", &inventory_selection->seed_counts[i]); // 2. sor: magok száma
     }
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%03d", &inventory_selection->harvest_counts[i]); // Line 3: harvest counts
+        fscanf(file, "%03d", &inventory_selection->harvest_counts[i]); // 3. sor: betakarított termények száma
     }
     for (int i = 0; i < INVENTORY_SIZE; i++)
     {
-        fscanf(file, "%03d", (int *)&inventory_selection->seed_types[i]); // Line 4: seed types
+        fscanf(file, "%03d", (int *)&inventory_selection->seed_types[i]); // 4. sor: magok típusai
     }
-    fscanf(file, "%d\n", &inventory_selection->total_seeds); // Line 5: total seeds
-    fscanf(file, "%d\n", &inventory_selection->money);       // Line 6: money
+    fscanf(file, "%d\n", &inventory_selection->total_seeds); // 5. sor: összes mag
+    fscanf(file, "%d\n", &inventory_selection->money);       // 6. sor: pénz
     fclose(file);
 }
 
@@ -74,11 +74,11 @@ void save_crop_state(const char *filename, CropManager *crop_manager)
     FILE *file = fopen(filename, "w");
     if (file == NULL)
     {
-        SDL_Log("Error opening crop state file: %s", strerror(errno));
+        SDL_Log("Hiba a növényállapot fájl megnyitásakor: %s", strerror(errno));
         return;
     }
 
-    fprintf(file, "%d\n", crop_manager->crop_count); // Save the number of crops
+    fprintf(file, "%d\n", crop_manager->crop_count); // Növények számának mentése
     for (int i = 0; i < crop_manager->crop_count; i++)
     {
         Crop *crop = &crop_manager->crops[i];
@@ -93,7 +93,7 @@ void load_crop_state(const char *filename, CropManager *crop_manager)
     FILE *file = fopen(filename, "r");
     if (file == NULL)
     {
-        SDL_Log("Crop state file not found, creating a new one.");
+        SDL_Log("Növényállapot fájl nem található, új létrehozása.");
         crop_manager->crop_count = 0;
         crop_manager->crops = NULL;
         save_crop_state(filename, crop_manager);
