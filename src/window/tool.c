@@ -32,8 +32,8 @@ void handle_tool_action(ToolType tool, Grid *grid, ForegroundGrid *fg_grid, int 
 
 void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int grid_y, CropManager *crop_manager, InventorySelection *inventory_selection)
 {
-    int seed_index = inventory_selection->selected_aux_item - 16;     // Calculate the index for the seed type
-    SeedType seed_type = inventory_selection->seed_types[seed_index]; // Get the seed type
+    int seed_index = inventory_selection->selected_aux_item - 16; // Calculate the index for the seed type
+    SeedType seed_type = (SeedType)seed_index;                    // Get the seed type directly from the index
     CropType crop_type;
 
     // Map seed type to crop type
@@ -66,7 +66,6 @@ void handle_crop_action(Grid *grid, ForegroundGrid *fg_grid, int grid_x, int gri
     case SEED_STARFRUIT:
         crop_type = CROP_STARFRUIT;
         break;
-    // Add more cases for additional seed types
     default:
         SDL_Log("Unknown seed type: %d", seed_type);
         return;

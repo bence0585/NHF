@@ -46,8 +46,9 @@ void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager
         SDL_FRect dest = {offset_x + crop->x * tile_size * zoom_level, offset_y + (crop->y - 1) * tile_size * zoom_level, tile_size * zoom_level, crop_height};
 
         const CropInfo *info = &crop_info[crop->type];
-        int src_x = (crop->growth_stage >= info->growth_stages ? info->growth_stages - 1 : crop->growth_stage) * tile_size;
-        int src_y = (crop->growth_stage < info->growth_stages) ? info->texture_start - 0x10 : info->texture_start;
+        int growth_stage = (crop->growth_stage >= info->growth_stages ? info->growth_stages - 1 : crop->growth_stage);
+        int src_x = ((info->texture_start % 16) + growth_stage) * tile_size;
+        int src_y = (info->texture_start / 16) * tile_size - tile_size;
 
         SDL_FRect src = {src_x, src_y, tile_size, 2 * tile_size}; // Source texture is 16x32
         SDL_RenderTexture(renderer, crop_texture, &src, &dest);
