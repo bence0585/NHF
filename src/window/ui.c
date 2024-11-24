@@ -283,3 +283,102 @@ void handle_aux_selection(int *selected_aux_item, int inventory_size, int offset
         *selected_aux_item = offset;
     }
 }
+
+const char *get_tile_type_name(TileType tile_type);
+
+void render_debug_info(SDL_Renderer *renderer, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, int screen_width, int screen_height)
+{
+    SDL_Color white = {255, 255, 255, 255};
+    char debug_text[512];
+    snprintf(debug_text, sizeof(debug_text),
+             "X: %d "
+             "Y: %d "
+             "Tile X: %d "
+             "Tile Y: %d "
+             "Look X: %d "
+             "Look Y: %d "
+             "Look Tile X: %d "
+             "Look Tile Y: %d "
+             "Direction: %d "
+             "Is Walking: %d "
+             "Equipped Tool: %d "
+             "Selected Main Item: %d "
+             "Selected Aux Item: %d "
+             "Selected Aux Inventory: %d",
+             character->x, character->y, character->tile_x, character->tile_y,
+             character->look_x, character->look_y, character->look_tile_x, character->look_tile_y,
+             character->anim_ctrl.direction, character->anim_ctrl.is_walking,
+             character->equipped_tool, inventory_selection->selected_main_item,
+             inventory_selection->selected_aux_item, inventory_selection->selected_aux_inventory);
+    render_text(renderer, debug_text, white, screen_width - 1410, 50, 1400, 30);
+
+    TileType target_tile_type = get_tile_type(grid, character->look_tile_x, character->look_tile_y);
+    const char *target_tile_type_name = get_tile_type_name(target_tile_type);
+    char tile_type_text[256];
+    snprintf(tile_type_text, sizeof(tile_type_text), "Target Tile Type: %d (%s)", target_tile_type, target_tile_type_name);
+    render_text(renderer, tile_type_text, white, screen_width - 1410, 90, 1400, 30);
+
+    for (int i = 0; i < crop_manager->crop_count; i++)
+    {
+        Crop *crop = &crop_manager->crops[i];
+        if (crop->x == character->look_tile_x && crop->y == character->look_tile_y)
+        {
+            char target_crop_info[256];
+            snprintf(target_crop_info, sizeof(target_crop_info), "Targeted Crop: Type %d, Stage %d, Time %d/%d",
+                     crop->type, crop->growth_stage, crop->current_time, crop->growth_time);
+            render_text(renderer, target_crop_info, white, screen_width - 1410, 170, 1400, 30);
+        }
+    }
+
+    int fg_tile_type = foreground_grid->foreground_layer[character->look_tile_x][character->look_tile_y];
+    char fg_tile_info[256];
+    snprintf(fg_tile_info, sizeof(fg_tile_info), "Foreground Tile Type: %d", fg_tile_type);
+    render_text(renderer, fg_tile_info, white, screen_width - 1410, 210, 1400, 30);
+
+    char fg_grid_state[256];
+    snprintf(fg_grid_state, sizeof(fg_grid_state), "Foreground Grid State at (%d, %d): %d", character->look_tile_x, character->look_tile_y, fg_tile_type);
+    render_text(renderer, fg_grid_state, white, screen_width - 1410, 250, 1400, 30);
+
+    if (inventory_selection->selected_aux_inventory == 1) // magtár
+    {
+        int seed_index = inventory_selection->selected_aux_item - 16;
+        SeedType selected_seed_type = inventory_selection->seed_types[seed_index];
+        const char *seed_type_name;
+        switch (selected_seed_type)
+        {
+        case SEED_PARSNIP:
+            seed_type_name = "Parsnip";
+            break;
+        case SEED_CAULIFLOWER:
+            seed_type_name = "Cauliflower";
+            break;
+        case SEED_COFFEE:
+            seed_type_name = "Coffee";
+            break;
+        case SEED_GREEN_BEAN:
+            seed_type_name = "Green Bean";
+            break;
+        case SEED_HOPS:
+            seed_type_name = "Hops";
+            break;
+        case SEED_POTATO:
+            seed_type_name = "Potato";
+            break;
+        case SEED_STRAWBERRY:
+            seed_type_name = "Strawberry";
+            break;
+        case SEED_MELON:
+            seed_type_name = "Melon";
+            break;
+        case SEED_STARFRUIT:
+            seed_type_name = "Starfruit";
+            break;
+        default:
+            seed_type_name = "Unknown";
+            break;
+        }
+        char seed_type_text[256];
+        snprintf(seed_type_text, sizeof(seed_type_text), "Selected Seed Type: %s, ID: %d", seed_type_name, seed_index);
+        render_text(renderer, seed_type_text, white, screen_width - 1410, 290, 1400, 30);
+    }
+}

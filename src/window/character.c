@@ -175,3 +175,218 @@ void update_animation(AnimationController *anim_ctrl)
     // Álló animáció: 0-0-0-0
     anim_ctrl->frame = 0;
 }
+
+void handle_key_down(SDL_Event *event, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, bool *quit, bool *show_debug_info)
+{
+    if (event->key.key == SDLK_ESCAPE)
+    {
+        SDL_Log("Kilepes: SDL3 ESC gomb");
+        *quit = true;
+        save_game_state("../src/save_state.txt", character->x, character->y, inventory_selection);
+        save_grid_state("../src/grid_state.txt", grid);
+        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Elmenti az előtér rács állapotát (Az előtér tárolja a növényeket, boltot, és minden olyat ami a háttér előtt van)
+        save_crop_state("../src/crop_state.txt", crop_manager);                          // Elmenti a növények állapotát
+        update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Frissíti az ütközési adatokat
+    }
+    else if (event->key.key >= SDLK_1 && event->key.key <= SDLK_9)
+    {
+        if (SDL_GetModState() & SDL_KMOD_SHIFT)
+        {
+            if (inventory_selection->selected_aux_inventory == 1) // Magtár
+            {
+                inventory_selection->selected_aux_item = 16 + (event->key.key - SDLK_1);
+            }
+            else if (inventory_selection->selected_aux_inventory == 2) // Betakarított terménytár
+            {
+                inventory_selection->selected_aux_item = 32 + (event->key.key - SDLK_1);
+            }
+        }
+        else
+        {
+            inventory_selection->selected_main_item = event->key.key - SDLK_1;
+            if (inventory_selection->selected_main_item >= INVENTORY_SIZE)
+            {
+                inventory_selection->selected_main_item = INVENTORY_SIZE - 1;
+            }
+            if (inventory_selection->selected_main_item < 3) // Eszköz
+            {
+                character->equipped_tool = (ToolType)inventory_selection->selected_main_item;
+            }
+            if (inventory_selection->selected_main_item == 3) // magtár
+            {
+                inventory_selection->selected_aux_inventory = 1;
+                inventory_selection->selected_aux_item = 16; // Magtár első helyére állít
+            }
+            else if (inventory_selection->selected_main_item == 4) // Betakarított terménytár
+            {
+                inventory_selection->selected_aux_inventory = 2;
+                inventory_selection->selected_aux_item = 32; // Betakarított terménytár első helyére állít
+            }
+            else
+            {
+                inventory_selection->selected_aux_inventory = 0; // Nincs aux tároló
+            }
+        }
+    }
+    else if (event->key.key == SDLK_C)
+    {
+        if (inventory_selection->selected_main_item < 3) // eszköz művelet
+        {
+            handle_tool_action(character->equipped_tool, grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+        }
+        else // ültetés, betakarítás
+        {
+            handle_crop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+        }
+    }
+    else if (event->key.key == SDLK_X)
+    {
+        if (inventory_selection->selected_main_item == 3 || inventory_selection->selected_main_item == 4) // Bolt művelet
+        {
+            handle_shop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, inventory_selection);
+        }
+    }
+    else if (event->key.key == SDLK_L) // Ütközési adatok módosítása (debug)
+    {
+        toggle_collision_data("../src/collisions.txt", grid, character->tile_x, character->tile_y);
+        read_collision_data("../src/collisions.txt", grid); // Olvassa be az ütközési adatokat
+    }
+    else if (event->key.key == SDLK_F2)
+    {
+        *show_debug_info = !*show_debug_info; // Debug információk megjelenítése
+    }
+}
+
+void handle_mouse_wheel(SDL_Event *event, InventorySelection *inventory_selection)
+{
+    if (SDL_GetModState() & SDL_KMOD_SHIFT)
+    {
+        if (inventory_selection->selected_aux_inventory == 1) // magtár
+        {
+            inventory_selection->selected_aux_item = 16 + (inventory_selection->selected_aux_item - 16 + (event->wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
+        }
+        else if (inventory_selection->selected_aux_inventory == 2) // betakarított terménytár
+        {
+            inventory_selection->selected_aux_item = 32 + (inventory_selection->selected_aux_item - 32 + (event->wheel.y > 0 ? -1 : 1) + INVENTORY_SIZE) % INVENTORY_SIZE;
+        }
+    }
+    else
+    {
+        if (event->wheel.y > 0) // Felgörget
+        {
+            inventory_selection->selected_main_item = (inventory_selection->selected_main_item - 1 + INVENTORY_SIZE) % INVENTORY_SIZE;
+        }
+        else if (event->wheel.y < 0) // legörget
+        {
+            inventory_selection->selected_main_item = (inventory_selection->selected_main_item + 1) % INVENTORY_SIZE;
+        }
+        if (inventory_selection->selected_main_item == 3) // magtár
+        {
+            inventory_selection->selected_aux_inventory = 1;
+        }
+        else if (inventory_selection->selected_main_item == 4) // betakarított terménytár
+        {
+            inventory_selection->selected_aux_inventory = 2;
+        }
+        else
+        {
+            inventory_selection->selected_aux_inventory = 0;
+        }
+    }
+}
+
+void handle_mouse_button_down(SDL_Event *event, Character *character, InventorySelection *inventory_selection, Grid *grid, ForegroundGrid *foreground_grid, CropManager *crop_manager, int screen_width, int screen_height, int *zoom_level)
+{
+    if (event->button.button == SDL_BUTTON_LEFT)
+    {
+        int x = event->button.x;
+        int y = event->button.y;
+        int slot;
+        bool button_clicked = false;
+
+        if (is_button_clicked(BUTTON_ZOOM_IN, x, y))
+        {
+            if (*zoom_level < 4)
+            {
+                (*zoom_level)++;
+                button_clicked = true;
+            }
+        }
+        else if (is_button_clicked(BUTTON_ZOOM_OUT, x, y))
+        {
+            if (*zoom_level > 1)
+            {
+                (*zoom_level)--;
+                button_clicked = true;
+            }
+        }
+        else if (is_button_clicked(BUTTON_SAVE_GAME, x, y))
+        {
+            save_game_state("../src/save_state.txt", character->x, character->y, inventory_selection);
+            save_grid_state("../src/grid_state.txt", grid);
+            save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Elmenti az előtér rács állapotát (Az előtér tárolja a növényeket, boltot, és minden olyat ami a háttér előtt van)
+            save_crop_state("../src/crop_state.txt", crop_manager);                          // Elmenti a növények állapotát
+            update_collision_data("../src/collisions.txt", grid, foreground_grid);           // Frissíti az ütközési adatokat
+            button_clicked = true;
+        }
+
+        if (!button_clicked)
+        {
+            if (is_inventory_slot_clicked(x, y, screen_width, screen_height, &slot))
+            {
+                if (SDL_GetModState() & SDL_KMOD_SHIFT)
+                {
+                    if (inventory_selection->selected_aux_inventory == 1)
+                    {
+                        inventory_selection->selected_aux_item = slot + 16; // Magok offsetje, mivel a magtár 16-tól kezdődik a karakterládában
+                    }
+                    else if (inventory_selection->selected_aux_inventory == 2)
+                    {
+                        inventory_selection->selected_aux_item = slot + 32; // Betakarított termények offsetje, mivel a betakarított terménytár 32-től kezdődik a karakterládában
+                    }
+                }
+                else
+                {
+                    inventory_selection->selected_main_item = slot;
+                    if (inventory_selection->selected_main_item == 3)
+                    {
+                        inventory_selection->selected_aux_inventory = 1;
+                    }
+                    else if (inventory_selection->selected_main_item == 4)
+                    {
+                        inventory_selection->selected_aux_inventory = 2;
+                    }
+                    else
+                    {
+                        inventory_selection->selected_aux_inventory = 0;
+                    }
+                }
+            }
+            else
+            {
+                if (inventory_selection->selected_main_item < 3) // eszköz művelet
+                {
+                    character->equipped_tool = (ToolType)inventory_selection->selected_main_item;
+                    handle_tool_action(character->equipped_tool, grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+                }
+                else // ültetés
+                {
+                    handle_crop_action(grid, foreground_grid, character->look_tile_x, character->look_tile_y, crop_manager, inventory_selection);
+                }
+            }
+        }
+    }
+}
+
+void update_character_position(Character *character, Grid *grid, int grid_width, int grid_height, int tile_size, int character_tile_width, int character_tile_height)
+{
+    // Biztosítja, hogy a karakter ne hagyja el a rácsot
+    if (character->x < 0)
+        character->x = 0;
+    if (character->y < 0)
+        character->y = 0;
+    if (character->x > (grid_width * tile_size - character_tile_width))
+        character->x = grid_width * tile_size - character_tile_width;
+    if (character->y > (grid_height * tile_size - character_tile_height))
+        character->y = grid_height * tile_size - character_tile_height;
+}

@@ -7,11 +7,14 @@
 #define INVENTORY_SIZE 9
 static const int TILE_SIZE = 16;
 
+/*
+ * Eszköz típusok
+ */
 typedef enum
 {
-    TOOL_HOE,
-    TOOL_WATERING_CAN,
-    TOOL_SICKLE,
+    TOOL_HOE,          // Kapa
+    TOOL_WATERING_CAN, // Öntözőkanna
+    TOOL_SICKLE,       // Sarló
 } ToolType;
 
 typedef struct
@@ -31,15 +34,27 @@ typedef struct
     int **foreground_layer;
 } ForegroundGrid;
 
-// Animációk típusai
+/*
+ * Animációk irányai
+ */
 typedef enum
 {
-    DIRECTION_DOWN,
-    DIRECTION_UP,
-    DIRECTION_RIGHT,
-    DIRECTION_LEFT
+    DIRECTION_DOWN,  // Lefelé
+    DIRECTION_UP,    // Felfelé
+    DIRECTION_RIGHT, // Jobbra
+    DIRECTION_LEFT   // Balra
 } Direction;
 
+/*
+ * Animáció vezérlő
+ * frame: aktuális képkocka
+ * max_frames: maximális képkocka
+ * frame_delay: képkocka késleltetés
+ * frame_delay_counter: aktuális képkocka késleltetés számláló
+ * frame_direction: képkocka léptetésének irány
+ * direction: karakter iránya
+ * is_walking: mozog-e
+ */
 typedef struct
 {
     int frame;
@@ -50,7 +65,20 @@ typedef struct
     Direction direction;
     bool is_walking;
 } AnimationController;
+/*
+    * Karakter
+    * x: x pozíció
+    * y: y pozíció
+    * tile_x: csempe x pozíció
+    * tile_y: csempe y pozíció
+    * look_x: nézés x pozíció
+    * look_y: nézés y pozíció
+    * look_tile_x: nézés csempe x pozíció
+    * look_tile_y: nézés csempe y pozíció
+    * equipped_tool: felszerelt eszköz
+    * anim_ctrl: animáció vezérlő
 
+*/
 typedef struct
 {
     int x;
@@ -58,65 +86,82 @@ typedef struct
     int tile_x;
     int tile_y;
     int look_x;
-    int look_y; // Add look_x and look_y fields
+    int look_y;
     int look_tile_x;
-    int look_tile_y; // Add look_tile_x and look_tile_y fields
+    int look_tile_y;
     ToolType equipped_tool;
     AnimationController anim_ctrl;
 } Character;
 
+/**
+ * Mag típusok
+ */
 typedef enum
 {
-    SEED_PARSNIP,
-    SEED_CAULIFLOWER,
-    SEED_COFFEE,
-    SEED_GREEN_BEAN,
-    SEED_HOPS,
-    SEED_POTATO,
-    SEED_STRAWBERRY,
-    SEED_MELON,
-    SEED_STARFRUIT,
-    // Add more seed types here
+    SEED_PARSNIP,     // Parsnip
+    SEED_CAULIFLOWER, // Karfiol
+    SEED_COFFEE,      // Kávé
+    SEED_GREEN_BEAN,  // Zöldbab
+    SEED_HOPS,        // Komló
+    SEED_POTATO,      // Burgonya
+    SEED_STRAWBERRY,  // Eper
+    SEED_MELON,       // Dinnye
+    SEED_STARFRUIT,   // Csillaggyümölcs
 } SeedType;
 
+/**
+ * Mag árak
+ */
 typedef enum
 {
-    SEED_PRICE_PARSNIP = 20,
-    SEED_PRICE_CAULIFLOWER = 80,
-    SEED_PRICE_COFFEE = 15,
-    SEED_PRICE_GREEN_BEAN = 60,
-    SEED_PRICE_HOPS = 30,
-    SEED_PRICE_POTATO = 50,
-    SEED_PRICE_STRAWBERRY = 100,
-    SEED_PRICE_MELON = 80,
-    SEED_PRICE_STARFRUIT = 200,
-    // Add more seed prices here
+    SEED_PRICE_PARSNIP = 20,     // Parsnip ára
+    SEED_PRICE_CAULIFLOWER = 80, // Karfiol ára
+    SEED_PRICE_COFFEE = 15,      // Kávé ára
+    SEED_PRICE_GREEN_BEAN = 60,  // Zöldbab ára
+    SEED_PRICE_HOPS = 30,        // Komló ára
+    SEED_PRICE_POTATO = 50,      // Burgonya ára
+    SEED_PRICE_STRAWBERRY = 100, // Eper ára
+    SEED_PRICE_MELON = 80,       // Dinnye ára
+    SEED_PRICE_STARFRUIT = 200,  // Csillaggyümölcs ára
 } SeedPrice;
 
+/**
+ * Termény árak
+ */
 typedef enum
 {
-    CROP_PRICE_PARSNIP = 35,
-    CROP_PRICE_CAULIFLOWER = 175,
-    CROP_PRICE_COFFEE = 20,
-    CROP_PRICE_GREEN_BEAN = 40,
-    CROP_PRICE_HOPS = 25,
-    CROP_PRICE_POTATO = 80,
-    CROP_PRICE_STRAWBERRY = 120,
-    CROP_PRICE_MELON = 250,
-    CROP_PRICE_STARFRUIT = 750,
-    // Add more crop prices here
+    CROP_PRICE_PARSNIP = 35,      // Parsnip ára
+    CROP_PRICE_CAULIFLOWER = 175, // Karfiol ára
+    CROP_PRICE_COFFEE = 20,       // Kávé ára
+    CROP_PRICE_GREEN_BEAN = 40,   // Zöldbab ára
+    CROP_PRICE_HOPS = 25,         // Komló ára
+    CROP_PRICE_POTATO = 80,       // Burgonya ára
+    CROP_PRICE_STRAWBERRY = 120,  // Eper ára
+    CROP_PRICE_MELON = 250,       // Dinnye ára
+    CROP_PRICE_STARFRUIT = 750,   // Csillaggyümölcs ára
 } CropPrice;
 
+/*
+ * Inventárválasztó
+ * selected_main_item: kiválasztott fő elem
+ * selected_aux_item: kiválasztott segéd elem
+ * selected_aux_inventory: kiválasztott segéd tároló (0: nincs, 1: magtár, 2: betakarított terménytár)
+ * seed_counts: magok száma
+ * harvest_counts: betakarított termények száma
+ * seed_types: mag típusok
+ * total_seeds: összes mag
+ * money: pénz
+ */
 typedef struct
 {
     int selected_main_item;
     int selected_aux_item;
-    int selected_aux_inventory;          // 0 for none, 1 for seed pouch, 2 for harvest bag
-    int seed_counts[INVENTORY_SIZE];     // Counts for seeds
-    int harvest_counts[INVENTORY_SIZE];  // Counts for harvests
-    SeedType seed_types[INVENTORY_SIZE]; // Types of seeds
-    int total_seeds;                     // Add total_seeds field
-    int money;                           // Add money field
+    int selected_aux_inventory;
+    int seed_counts[INVENTORY_SIZE];
+    int harvest_counts[INVENTORY_SIZE];
+    SeedType seed_types[INVENTORY_SIZE];
+    int total_seeds;
+    int money;
 } InventorySelection;
 
 // Inicializálás
@@ -160,56 +205,75 @@ bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height
 void save_game_state(const char *filename, int character_x, int character_y, InventorySelection *inventory_selection);
 void load_game_state(const char *filename, int *character_x, int *character_y, InventorySelection *inventory_selection);
 
+/**
+ * Gomb típusok
+ */
 typedef enum
 {
-    BUTTON_ZOOM_IN,
-    BUTTON_ZOOM_OUT,
-    BUTTON_SAVE_GAME,
+    BUTTON_ZOOM_IN,   // Nagyítás gomb
+    BUTTON_ZOOM_OUT,  // Kicsinyítés gomb
+    BUTTON_SAVE_GAME, // Játék mentése gomb
 } ButtonType;
 
 void render_button(SDL_Renderer *renderer, ButtonType button);
 bool is_button_clicked(ButtonType button, int x, int y);
 
-// Animation
+/**
+ * Animáció frissítése
+ * @param anim_ctrl animációvezérlő mutatója
+ */
 void update_animation(AnimationController *anim_ctrl);
 
+/**
+ * Csempe típusok
+ */
 typedef enum
 {
-    TILE_EMPTY,
-    TILE_HOE = 229, // Hoed ground
-    TILE_WATERED,
-    TILE_HOE_PLANTED,         // Hoed and planted ground
-    TILE_HOE_PLANTED_WATERED, // Hoed, planted, and watered ground
-    TILE_CROP_1,
-    TILE_CROP_2,
-    TILE_CROP_3,
-    // Add more tile types here
+    TILE_EMPTY,               // Üres csempe
+    TILE_HOE = 229,           // Kapált föld
+    TILE_WATERED,             // Öntözött föld
+    TILE_HOE_PLANTED,         // Kapált és ültetett föld
+    TILE_HOE_PLANTED_WATERED, // Kapált, ültetett és öntözött föld
+
 } TileType;
 
+/**
+ * Eszköz műveletek
+ */
 typedef enum
 {
-    TOOL_ACTION_HOE,
-    TOOL_ACTION_WATER,
+    TOOL_ACTION_HOE,   // Kapálás
+    TOOL_ACTION_WATER, // Öntözés
 } ToolAction;
 
 void set_tile_type(Grid *grid, int grid_x, int grid_y, TileType tile_type);
 void update_tile_texture(Grid *grid, int grid_x, int grid_y);
 TileType get_tile_type(Grid *grid, int grid_x, int grid_y);
 
+/**
+ * Növény típusok
+ */
 typedef enum
 {
-    CROP_PARSNIP,
-    CROP_CAULIFLOWER,
-    CROP_COFFEE,
-    CROP_GREEN_BEAN,
-    CROP_HOPS,
-    CROP_POTATO,
-    CROP_STRAWBERRY,
-    CROP_MELON,
-    CROP_STARFRUIT,
+    CROP_PARSNIP,     // Paszternák
+    CROP_CAULIFLOWER, // Karfiol
+    CROP_COFFEE,      // Kávé
+    CROP_GREEN_BEAN,  // Zöldbab
+    CROP_HOPS,        // Komló
+    CROP_POTATO,      // Burgonya
+    CROP_STRAWBERRY,  // Eper
+    CROP_MELON,       // Dinnye
+    CROP_STARFRUIT,   // Csillaggyümölcs
     // Add more crop types here
 } CropType;
 
+/**
+ * Növény információk
+ * type: növény típusa
+ * name: növény neve
+ * growth_stages: növekedési fázisok száma
+ * texture_start: textúra kezdő pozíciója
+ */
 typedef struct
 {
     CropType type;
@@ -231,28 +295,45 @@ static const CropInfo crop_info[] = {
     // Add more crop info here
 };
 
+/**
+ * Növény fázisok
+ */
 typedef enum
 {
-    CROP_PHASE_1,
-    CROP_PHASE_2,
-    CROP_PHASE_3,
-    CROP_PHASE_4,
-    CROP_PHASE_5,
-    CROP_PHASE_6,
-    CROP_PHASE_7,
-    CROP_PHASE_MAX // Maximum growth phase
+    CROP_PHASE_1,  // 1. fázis
+    CROP_PHASE_2,  // 2. fázis
+    CROP_PHASE_3,  // 3. fázis
+    CROP_PHASE_4,  // 4. fázis
+    CROP_PHASE_5,  // 5. fázis
+    CROP_PHASE_6,  // 6. fázis
+    CROP_PHASE_7,  // 7. fázis
+    CROP_PHASE_MAX // Maximális növekedési fázis
 } CropPhase;
 
+/**
+ * Növény
+ * x: x koordináta
+ * y: y koordináta
+ * type: növény típusa
+ * growth_stage: növekedési fázis
+ * growth_time: növekedési idő
+ * current_time: aktuális növekedési idő
+ */
 typedef struct
 {
     int x;
     int y;
     CropType type;
     CropPhase growth_stage;
-    int growth_time;  // Time required to grow to the next stage
-    int current_time; // Current time spent growing
+    int growth_time;
+    int current_time;
 } Crop;
 
+/**
+ * Növénykezelő
+ * crops: növények tömbje
+ * crop_count: növények száma
+ */
 typedef struct
 {
     Crop *crops;
