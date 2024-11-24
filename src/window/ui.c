@@ -146,14 +146,6 @@ void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, Invento
  */
 void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelection *inventory_selection, int screen_width, int screen_height)
 {
-    SDL_FRect zoom_in_button = {10.0f, 10.0f, 60.0f, 60.0f}; // Gomb helye, mérete
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);        // Zöld szín
-    SDL_RenderFillRect(renderer, &zoom_in_button);
-
-    SDL_FRect zoom_out_button = {80.0f, 10.0f, 60.0f, 60.0f}; // Gomb helye, mérete
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);         // Vörös szín
-    SDL_RenderFillRect(renderer, &zoom_out_button);
-
     SDL_FRect save_game_button = {150.0f, 10.0f, 60.0f, 60.0f}; // Gomb helye, mérete
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);           // Kék szín
     SDL_RenderFillRect(renderer, &save_game_button);
