@@ -135,6 +135,8 @@ typedef enum
     TILE_EMPTY,
     TILE_HOE = 229, // Hoed ground
     TILE_WATERED,
+    TILE_HOE_PLANTED,         // Hoed and planted ground
+    TILE_HOE_PLANTED_WATERED, // Hoed, planted, and watered ground
     TILE_CROP_1,
     TILE_CROP_2,
     TILE_CROP_3,
@@ -161,8 +163,24 @@ typedef enum
     CROP_PRODUCT_1,
     CROP_PRODUCT_2,
     CROP_PRODUCT_3,
+    CROP_PARSNIP, // Add Parsnip crop type
+    CROP_CABBAGE, // Add Cabbage crop type
     // Add more crop types here
 } CropType;
+
+typedef struct
+{
+    CropType type;
+    const char *name;
+    int growth_stages;
+    int texture_start;
+} CropInfo;
+
+static const CropInfo crop_info[] = {
+    {CROP_PARSNIP, "Parsnip", 6, 0x10},
+    {CROP_CABBAGE, "Cabbage", 7, 0x30},
+    // Add more crop info here
+};
 
 typedef enum
 {
@@ -171,6 +189,8 @@ typedef enum
     CROP_PHASE_3,
     CROP_PHASE_4,
     CROP_PHASE_5,
+    CROP_PHASE_6,
+    CROP_PHASE_7,
     CROP_PHASE_MAX // Maximum growth phase
 } CropPhase;
 
@@ -178,6 +198,7 @@ typedef struct
 {
     int x;
     int y;
+    CropType type;
     CropPhase growth_stage;
     int growth_time;  // Time required to grow to the next stage
     int current_time; // Current time spent growing
@@ -190,7 +211,7 @@ typedef struct
 } CropManager;
 
 void initialize_crop_manager(CropManager *crop_manager);
-void add_crop(CropManager *crop_manager, int x, int y, int growth_time);
+void add_crop(CropManager *crop_manager, int x, int y, CropType type, int growth_time);
 void update_crops(CropManager *crop_manager, int ticks);
 void render_crops(SDL_Renderer *renderer, SDL_Texture *crop_texture, CropManager *crop_manager, int tile_size, double zoom_level, int offset_x, int offset_y);
 

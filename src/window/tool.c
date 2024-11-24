@@ -39,17 +39,21 @@ void handle_crop_action(CropType crop, Grid *grid, ForegroundGrid *fg_grid, int 
     {
         SDL_Log("Seed count before planting: %d", inventory_selection->seed_counts[seed_index]);
 
-        if (get_tile_type(grid, grid_x, grid_y) == TILE_HOE || get_tile_type(grid, grid_x, grid_y) == TILE_WATERED)
+        if ((get_tile_type(grid, grid_x, grid_y) == TILE_HOE || get_tile_type(grid, grid_x, grid_y) == TILE_WATERED) &&
+            fg_grid->foreground_layer[grid_x][grid_y] == 0) // Check if the foreground is clear
         {
-            add_crop(crop_manager, grid_x, grid_y, 10);     // Example growth time
-            inventory_selection->seed_counts[seed_index]--; // Decrement the seed count
+            add_crop(crop_manager, grid_x, grid_y, crop, 10); // Example growth time
+            inventory_selection->seed_counts[seed_index]--;   // Decrement the seed count in memory
             SDL_Log("Seed planted. New seed count: %d", inventory_selection->seed_counts[seed_index]);
-            fg_grid->foreground_layer[grid_x][grid_y] = crop;                        // Store the seed in the foreground grid state
-            save_foreground_grid_state("../src/foreground_grid_state.txt", fg_grid); // Save changes to the foreground grid state file
+
+            // Update the foreground grid state with the crop type
+            fg_grid->foreground_layer[grid_x][grid_y] = crop_info[crop].texture_start;
+
+            // Do not save the foreground grid state to the file here
         }
         else
         {
-            SDL_Log("Cannot plant seed. Tile is not hoed or watered.");
+            SDL_Log("Cannot plant seed. Tile is not hoed, watered, or the foreground is not clear.");
         }
     }
     else

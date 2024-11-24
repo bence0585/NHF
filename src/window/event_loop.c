@@ -269,7 +269,7 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
                     {
                         save_game_state("../src/save_state.txt", character.x, character.y, &inventory_selection);
                         save_grid_state("../src/grid_state.txt", grid);
-                        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid);
+                        save_foreground_grid_state("../src/foreground_grid_state.txt", foreground_grid); // Save changes to the foreground grid state file
                         button_clicked = true;
                     }
 
@@ -439,6 +439,11 @@ void event_loop(SDL_Renderer *renderer, Grid *background_grid, ForegroundGrid *f
             char fg_tile_info[256];
             snprintf(fg_tile_info, sizeof(fg_tile_info), "Foreground Tile Type: %d", fg_tile_type);
             render_text(renderer, fg_tile_info, white, screen_width - 1410, 210, 1400, 30); // Render foreground grid info below targeted crop info
+
+            // Render entire foreground grid state
+            char fg_grid_state[256];
+            snprintf(fg_grid_state, sizeof(fg_grid_state), "Foreground Grid State at (%d, %d): %d", character.look_tile_x, character.look_tile_y, fg_tile_type);
+            render_text(renderer, fg_grid_state, white, screen_width - 1410, 250, 1400, 30); // Render foreground grid state below foreground grid info
         }
 
         SDL_RenderPresent(renderer);
