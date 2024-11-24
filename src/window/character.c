@@ -1,8 +1,5 @@
 #include "window.h"
 
-void calculate_look_coordinates(Character *character, int tile_size);
-void update_look_tile(Character *character, int tile_size);
-
 void initialize_character(Character *character, int start_x, int start_y)
 {
     character->x = start_x;

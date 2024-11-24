@@ -1,12 +1,10 @@
 #include "window.h"
-#include <stdio.h>            // Include the correct header for snprintf
-#include <SDL3_ttf/SDL_ttf.h> // Include SDL_ttf for text rendering
+#include <stdio.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
-#define INVENTORY_SIZE 9
-#define ITEM_SIZE 64       // Increased item size for scaled resolution
-#define PADDING 4          // Padding between inventory tiles
-#define BORDER_THICKNESS 4 // Thicker border
-
+static const int inventory_size = 9;
+static const int padding = 4;
+static const int item_size = 64;
 static TTF_Font *font = NULL;
 
 int initialize_font(const char *font_path, int font_size)
@@ -58,34 +56,34 @@ void cleanup_font()
 
 void render_inventory(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelection *inventory_selection, int screen_width, int screen_height, int inventory_y, int item_offset)
 {
-    int inventory_width = INVENTORY_SIZE * (ITEM_SIZE + PADDING) - PADDING;
+    int inventory_width = inventory_size * (item_size + padding) - padding;
     int inventory_x = (screen_width - inventory_width) / 2;
-
+    int border_thickness = 4;
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color for borders
 
-    for (int i = 0; i < INVENTORY_SIZE; i++)
+    for (int i = 0; i < inventory_size; i++)
     {
-        SDL_FRect item_rect = {inventory_x + i * (ITEM_SIZE + PADDING), inventory_y, ITEM_SIZE, ITEM_SIZE};
+        SDL_FRect item_rect = {inventory_x + i * (item_size + padding), inventory_y, item_size, item_size};
         SDL_RenderRect(renderer, &item_rect);
 
         if (item_offset == 0 && i == inventory_selection->selected_main_item)
         {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);                                                                                                                // Red color for selected main item border
-            SDL_FRect highlight_rect = {item_rect.x - BORDER_THICKNESS, item_rect.y - BORDER_THICKNESS, ITEM_SIZE + 2 * BORDER_THICKNESS, ITEM_SIZE + 2 * BORDER_THICKNESS}; // Thicker border
+            SDL_FRect highlight_rect = {item_rect.x - border_thickness, item_rect.y - border_thickness, item_size + 2 * border_thickness, item_size + 2 * border_thickness}; // Thicker border
             SDL_RenderFillRect(renderer, &highlight_rect);
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Reset to white color
         }
         else if (item_offset == 16 && i == inventory_selection->selected_aux_item - 16)
         {
             SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);                                                                                                                // Green color for selected seed
-            SDL_FRect highlight_rect = {item_rect.x - BORDER_THICKNESS, item_rect.y - BORDER_THICKNESS, ITEM_SIZE + 2 * BORDER_THICKNESS, ITEM_SIZE + 2 * BORDER_THICKNESS}; // Thicker border
+            SDL_FRect highlight_rect = {item_rect.x - border_thickness, item_rect.y - border_thickness, item_size + 2 * border_thickness, item_size + 2 * border_thickness}; // Thicker border
             SDL_RenderFillRect(renderer, &highlight_rect);
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Reset to white color
         }
         else if (item_offset == 32 && i == inventory_selection->selected_aux_item - 32)
         {
             SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);                                                                                                                // Blue color for selected harvest
-            SDL_FRect highlight_rect = {item_rect.x - BORDER_THICKNESS, item_rect.y - BORDER_THICKNESS, ITEM_SIZE + 2 * BORDER_THICKNESS, ITEM_SIZE + 2 * BORDER_THICKNESS}; // Thicker border
+            SDL_FRect highlight_rect = {item_rect.x - border_thickness, item_rect.y - border_thickness, item_size + 2 * border_thickness, item_size + 2 * border_thickness}; // Thicker border
             SDL_RenderFillRect(renderer, &highlight_rect);
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Reset to white color
         }
@@ -126,19 +124,19 @@ void render_ui(SDL_Renderer *renderer, SDL_Texture *item_tilemap, InventorySelec
     SDL_Color white = {255, 255, 255, 255};
     render_text(renderer, money_text, white, 10.0f, 80.0f, 200.0f, 30.0f); // Position below the zoom buttons
 
-    int inventory_y = screen_height - ITEM_SIZE - 20; // 20 pixels from the bottom
+    int inventory_y = screen_height - item_size - 20; // 20 pixels from the bottom
     render_inventory(renderer, item_tilemap, inventory_selection, screen_width, screen_height, inventory_y, 0);
 
     // Render additional inventories for seed pouch and harvest bag
     if (inventory_selection->selected_main_item == 3) // Seed pouch
     {
         inventory_selection->selected_aux_inventory = 1;
-        render_inventory(renderer, item_tilemap, inventory_selection, screen_width, screen_height, inventory_y - ITEM_SIZE - 20, 16); // Offset for seeds
+        render_inventory(renderer, item_tilemap, inventory_selection, screen_width, screen_height, inventory_y - item_size - 20, 16); // Offset for seeds
     }
     else if (inventory_selection->selected_main_item == 4) // Harvest bag
     {
         inventory_selection->selected_aux_inventory = 2;
-        render_inventory(renderer, item_tilemap, inventory_selection, screen_width, screen_height, inventory_y - ITEM_SIZE - 20, 32); // Offset for harvested products
+        render_inventory(renderer, item_tilemap, inventory_selection, screen_width, screen_height, inventory_y - item_size - 20, 32); // Offset for harvested products
     }
     else
     {
@@ -185,16 +183,16 @@ bool is_button_clicked(ButtonType button, int x, int y)
 
 bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height, int *slot)
 {
-    int inventory_width = INVENTORY_SIZE * (ITEM_SIZE + PADDING) - PADDING;
+    int inventory_width = inventory_size * (item_size + padding) - padding;
     int inventory_x = (screen_width - inventory_width) / 2;
-    int inventory_y = screen_height - ITEM_SIZE - 20; // 20 pixels from the bottom
+    int inventory_y = screen_height - item_size - 20; // 20 pixels from the bottom
 
-    if (y >= inventory_y && y <= inventory_y + ITEM_SIZE)
+    if (y >= inventory_y && y <= inventory_y + item_size)
     {
-        for (int i = 0; i < INVENTORY_SIZE; i++)
+        for (int i = 0; i < inventory_size; i++)
         {
-            int slot_x = inventory_x + i * (ITEM_SIZE + PADDING);
-            if (x >= slot_x && x <= slot_x + ITEM_SIZE)
+            int slot_x = inventory_x + i * (item_size + padding);
+            if (x >= slot_x && x <= slot_x + item_size)
             {
                 *slot = i;
                 return true;
@@ -203,14 +201,14 @@ bool is_inventory_slot_clicked(int x, int y, int screen_width, int screen_height
     }
 
     // Check for additional inventories
-    if (y >= inventory_y - ITEM_SIZE - 20 && y <= inventory_y - 20)
+    if (y >= inventory_y - item_size - 20 && y <= inventory_y - 20)
     {
-        for (int i = 0; i < INVENTORY_SIZE; i++)
+        for (int i = 0; i < inventory_size; i++)
         {
-            int slot_x = inventory_x + i * (ITEM_SIZE + PADDING);
-            if (x >= slot_x && x <= slot_x + ITEM_SIZE)
+            int slot_x = inventory_x + i * (item_size + padding);
+            if (x >= slot_x && x <= slot_x + item_size)
             {
-                *slot = i + INVENTORY_SIZE; // Offset for additional inventory
+                *slot = i + inventory_size; // Offset for additional inventory
                 return true;
             }
         }
@@ -242,5 +240,3 @@ void handle_aux_selection(int *selected_aux_item, int inventory_size, int offset
         *selected_aux_item = offset;
     }
 }
-
-// ...existing code...
